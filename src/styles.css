@@ -19,7 +19,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg-outer);
   color: var(--text);
   overscroll-behavior: none;
@@ -799,8 +799,8 @@ button {
 }
 
 .array-dot {
-  width: clamp(20px, 4vmin, 44px);
-  height: clamp(20px, 4vmin, 44px);
+  width: clamp(44px, 5vmin, 56px);
+  height: clamp(44px, 5vmin, 56px);
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #f0f4ff 0%, #7ea0d6 65%, #3a558a 100%);
   box-shadow:
@@ -2592,3 +2592,25 @@ svg.mushroom-icon {
 .piece-tag--p11 { --cap: #a259ff; --cap-shade: #6a2eb8; }
 
 /* === END Lane B === */
+
+/* === Batch D: Nunito typography === */
+/* Marker only — font swap is in-place on the html/body/#root rule above;
+   imports live in src/main.tsx. Keep this sentinel for merge tooling. */
+/* === end Batch D === */
+
+/* === Batch D: Touch target floor (WCAG 2.5.5, ≥44px) === */
+.tool-btn {
+  min-width: clamp(44px, 5vmin, 56px);
+  min-height: clamp(44px, 5vmin, 56px);
+}
+/* === end Batch D === */
+
+/* === Batch D: Focus-visible outlines === */
+/* Yellow ring for keyboard / assistive-tech users on a tablet-first product. */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--tool-active);
+  outline-offset: 2px;
+}
+/* === end Batch D === */
