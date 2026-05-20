@@ -822,7 +822,7 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
   'factors-of-one': [
     {
       prompt:
-        "Welcome to lesson 7!\n\nA FACTOR of a number is a smaller number that divides into it evenly — no leftovers. The grouping game you just played is exactly how to find them.\n\nLet's hunt for ALL the factors of 12.",
+        "Welcome to lesson 9!\n\nA FACTOR of a number is a smaller number that divides into it evenly — no leftovers. The grouping game you just played is exactly how to find them.\n\nLet's hunt for ALL the factors of 12.",
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
@@ -858,7 +858,7 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
   'factor-pairs': [
     {
       prompt:
-        "Welcome to lesson 8!\n\nLast lesson we found that factors come in pairs: 2×6=12, 3×4=12. Each pair makes a RECTANGLE.\n\nLet's see all the rectangles 12 dots can make.",
+        "Welcome to lesson 10!\n\nLast lesson we found that factors come in pairs: 2×6=12, 3×4=12. Each pair makes a RECTANGLE.\n\nLet's see all the rectangles 12 dots can make.",
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
@@ -911,7 +911,7 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
   'gcf-venn': [
     {
       prompt:
-        "Welcome to the last lesson!\n\nNow let's meet a new number: 18. We'll compare its factors with the factors of 12 — using a VENN DIAGRAM.\n\nTwo overlapping circles: one holds the factors of 12, the other holds the factors of 18. The factors they SHARE go in the middle.",
+        "Welcome to lesson 11!\n\nNow let's meet a new number: 18. We'll compare its factors with the factors of 12 — using a VENN DIAGRAM.\n\nTwo overlapping circles: one holds the factors of 12, the other holds the factors of 18. The factors they SHARE go in the middle.",
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
@@ -934,7 +934,7 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
     },
     {
       prompt:
-        "You did it!\n\nYou can split fractions, spot divisibility, find every factor of a number, and find the GCF of two numbers.\n\nThat's the complete toolkit for simplifying any fraction. 🎉",
+        "Nice work!\n\nYou can split fractions, spot divisibility, find every factor of a number, and find the GCF of two numbers.\n\nNext up: using those skills to compare two fractions with different bottoms — and then to actually add them together.",
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
