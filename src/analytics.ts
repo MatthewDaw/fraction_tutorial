@@ -70,11 +70,14 @@ export function clearEvents(): void {
   swallow(() => localStorage.removeItem(STORAGE_KEY), undefined);
 }
 
-// RFC-4180-ish: quote only when the value contains a comma, quote, CR, or LF;
-// inside a quoted value, double the embedded quote.
+// RFC-4180-ish quoting (commas, quotes, CR, LF) plus a leading single quote
+// when the value starts with =, +, -, or @. Excel and Google Sheets treat
+// those leading characters as a formula; prefixing ' neutralizes the cell
+// without changing what a plain text reader sees beyond one extra char.
 function csvCell(value: string | number | undefined): string {
   if (value === undefined) return '';
-  const s = String(value);
+  let s = String(value);
+  if (/^[=+\-@]/.test(s)) s = `'${s}`;
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

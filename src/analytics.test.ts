@@ -78,6 +78,20 @@ describe('exportEventsAsCSV', () => {
     expect(csv).toContain('2,lesson_started,"has ""quote""",,');
     expect(csv).toContain('3,lesson_started,"line\nbreak",,');
   });
+
+  it('neutralizes leading =, +, -, @ to block CSV formula injection in Excel', () => {
+    recordAnalyticsEvent(evt({ ts: 1, type: 'lesson_started', conceptId: '=cmd|"/c calc"!A0' }));
+    recordAnalyticsEvent(evt({ ts: 2, type: 'lesson_started', conceptId: '+danger' }));
+    recordAnalyticsEvent(evt({ ts: 3, type: 'lesson_started', conceptId: '-1+1' }));
+    recordAnalyticsEvent(evt({ ts: 4, type: 'lesson_started', conceptId: '@cmd' }));
+    const csv = exportEventsAsCSV();
+    // Leading formula chars get a ' prefix; commas/quotes in the payload still
+    // trigger normal RFC-4180 quoting, so the =cmd payload ends up double-wrapped.
+    expect(csv).toContain(`1,lesson_started,"'=cmd|""/c calc""!A0",,`);
+    expect(csv).toContain('2,lesson_started,\'+danger,,');
+    expect(csv).toContain("3,lesson_started,'-1+1,,");
+    expect(csv).toContain("4,lesson_started,'@cmd,,");
+  });
 });
 
 describe('clearEvents', () => {
