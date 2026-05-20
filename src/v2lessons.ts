@@ -227,6 +227,15 @@ export type V2StepCanvas =
       kind: 'twoFractions';
       left: { num: number; denom: number };
       right: { num: number; denom: number };
+    }
+  // Animated demonstration of a divisibility rule on a few worked examples.
+  // Sits on the trick-explanation step so the student sees the rule applied
+  // before the worksheet drill. See `TechniqueAnimation.tsx`.
+  | {
+      kind: 'technique';
+      rule: 'last-digit' | 'digit-sum' | 'double-subtract' | 'alternating-sum';
+      divisor: number;
+      examples: { value: number; passes: boolean }[];
     };
 
 export type V2LessonStep = {
@@ -419,6 +428,16 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
+      canvas: {
+        kind: 'technique',
+        rule: 'last-digit',
+        divisor: 2,
+        examples: [
+          { value: 48, passes: true },
+          { value: 73, passes: false },
+          { value: 124, passes: true },
+        ],
+      },
     },
     {
       prompt:
@@ -505,6 +524,16 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
+      canvas: {
+        kind: 'technique',
+        rule: 'digit-sum',
+        divisor: 3,
+        examples: [
+          { value: 27, passes: true },
+          { value: 25, passes: false },
+          { value: 42, passes: true },
+        ],
+      },
     },
     {
       prompt:
@@ -592,6 +621,16 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
+      canvas: {
+        kind: 'technique',
+        rule: 'last-digit',
+        divisor: 5,
+        examples: [
+          { value: 245, passes: true },
+          { value: 73, passes: false },
+          { value: 130, passes: true },
+        ],
+      },
     },
     {
       prompt:
@@ -678,6 +717,16 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
+      canvas: {
+        kind: 'technique',
+        rule: 'double-subtract',
+        divisor: 7,
+        examples: [
+          { value: 364, passes: true },
+          { value: 51, passes: false },
+          { value: 91, passes: true },
+        ],
+      },
     },
     {
       prompt:
@@ -765,6 +814,16 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
+      canvas: {
+        kind: 'technique',
+        rule: 'alternating-sum',
+        divisor: 11,
+        examples: [
+          { value: 209, passes: true },
+          { value: 145, passes: false },
+          { value: 132, passes: true },
+        ],
+      },
     },
     {
       prompt:

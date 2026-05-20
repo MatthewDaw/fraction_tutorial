@@ -11,6 +11,7 @@ import ArrayCanvas from './ArrayCanvas';
 import CommonFactorsCanvas from './CommonFactorsCanvas';
 import VennCanvas from './VennCanvas';
 import WorksheetCanvas from './WorksheetCanvas';
+import TechniqueAnimation from './TechniqueAnimation';
 import TwoFractionsCanvas, { FractionSide } from './TwoFractionsCanvas';
 import CapstoneEndCard, { CapstoneProblem } from './CapstoneEndCard';
 import PhaseIndicator, { CapstonePhase } from './PhaseIndicator';
@@ -58,8 +59,20 @@ import {
   hammerSizeFromAnim,
   isMultiPhaseTest,
 } from './v2lessons';
+import { formatHash, parseHash } from './urlState';
 
 const INITIAL_V2_CONCEPT: V2ConceptId = V2_CONCEPTS[0];
+
+const INITIAL_URL_STATE = parseHash(
+  typeof window === 'undefined' ? '' : window.location.hash,
+);
+const INITIAL_CONCEPT_ID: V2ConceptId =
+  INITIAL_URL_STATE.conceptId ?? INITIAL_V2_CONCEPT;
+const INITIAL_TAB: V2Tab = INITIAL_URL_STATE.tab ?? 'lesson';
+const INITIAL_STEP_IDX = Math.min(
+  INITIAL_URL_STATE.stepIdx ?? 0,
+  V2_LESSONS[INITIAL_CONCEPT_ID].length - 1,
+);
 
 // V2 lesson steps are scripted, not generated. Wrap one as a Question so the
 // existing board/tool machinery can render it — no target means no auto-solve
@@ -103,9 +116,9 @@ const pickFromRemaining = (pool: number[], asked: number[]): number => {
 };
 
 const App = () => {
-  const [v2ConceptId, setV2ConceptId] = useState<V2ConceptId>(INITIAL_V2_CONCEPT);
-  const [v2Tab, setV2Tab] = useState<V2Tab>('lesson');
-  const [v2StepIdx, setV2StepIdx] = useState(0);
+  const [v2ConceptId, setV2ConceptId] = useState<V2ConceptId>(INITIAL_CONCEPT_ID);
+  const [v2Tab, setV2Tab] = useState<V2Tab>(INITIAL_TAB);
+  const [v2StepIdx, setV2StepIdx] = useState(INITIAL_STEP_IDX);
   const [v2Animation, setV2Animation] = useState<V2Animation | null>(null);
   // Yes/No answer the student has picked on the current guess step (null
   // until they answer). Resets whenever the displayed step changes.
@@ -146,7 +159,7 @@ const App = () => {
   const [multiPhaseProblems, setMultiPhaseProblems] = useState<CapstoneProblem[]>([]);
   const [multiPhasePassed, setMultiPhasePassed] = useState(false);
   const [question, setQuestion] = useState<Question>(() =>
-    lessonStepToQuestion(V2_LESSONS[INITIAL_V2_CONCEPT][0]),
+    lessonStepToQuestion(V2_LESSONS[INITIAL_CONCEPT_ID][INITIAL_STEP_IDX]),
   );
   const [root, setRoot] = useState<Piece>(question.initialState);
   const [tool, setTool] = useState<Tool>(null);
@@ -550,6 +563,19 @@ const App = () => {
     setV2ExploreFound(new Set());
   }, [v2StepIdx, v2ConceptId, v2Tab]);
 
+  // Mirror lesson nav into the URL hash so refresh + deep-link land on the
+  // current step. replaceState (not push) keeps browser history uncluttered.
+  useEffect(() => {
+    const next = formatHash({
+      conceptId: v2ConceptId,
+      tab: v2Tab,
+      stepIdx: v2StepIdx,
+    });
+    if (window.location.hash !== next) {
+      window.history.replaceState(null, '', next);
+    }
+  }, [v2ConceptId, v2Tab, v2StepIdx]);
+
   // factorReveal credits the current step and any prior ones. Crediting the
   // current step means the side panel reflects the lesson's narrative as
   // the student reads it ("So 1 and 12 are already on the list"), not after
@@ -886,6 +912,14 @@ const App = () => {
             emphasis={canvas.emphasis}
             resetKey={v2StepIdx}
             onPassed={markIf('worksheet-passed')}
+          />
+        );
+      case 'technique':
+        return (
+          <TechniqueAnimation
+            rule={canvas.rule}
+            divisor={canvas.divisor}
+            examples={canvas.examples}
           />
         );
       case 'twoFractions':

@@ -2858,3 +2858,172 @@ a:focus-visible,
   outline: var(--stroke-2) solid var(--tool-active);
   outline-offset: var(--space-1);
 }
+
+/* === Technique animation (divisibility trick steps) === */
+
+.technique {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-5);
+}
+
+.technique__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(180px, 28vh, 280px);
+}
+
+.technique__row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.technique__row--col {
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.technique__number {
+  display: flex;
+  gap: var(--space-2);
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(40px, 7vmin, 64px);
+  color: var(--text);
+  letter-spacing: 0.05em;
+}
+
+.technique__digit {
+  display: inline-block;
+  min-width: 0.7em;
+  text-align: center;
+  transition: color 250ms ease, transform 350ms cubic-bezier(0.3, 1.4, 0.6, 1),
+    opacity 250ms ease;
+}
+
+.technique__digit--dim {
+  color: var(--text);
+  opacity: 0.35;
+}
+
+.technique__digit--focused {
+  color: var(--tool-active);
+  transform: scale(1.25) translateY(-4px);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--tool-active) 60%, transparent);
+}
+
+.technique__digit--lift {
+  transform: translateY(-12px) scale(1.1);
+  color: var(--tool-active);
+}
+
+.technique__sign {
+  display: inline-block;
+  font-size: 0.7em;
+  margin-right: 0.1em;
+  opacity: 0.7;
+  font-weight: 700;
+}
+
+.technique__formula {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: clamp(20px, 3.2vmin, 28px);
+  color: var(--text);
+  opacity: 0.9;
+  animation: technique-fade-in 350ms ease both;
+}
+
+.technique__formula strong {
+  color: var(--tool-active);
+  font-weight: 700;
+  margin-left: var(--space-1);
+}
+
+.technique__verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(18px, 2.8vmin, 24px);
+  animation: technique-pop-in 400ms cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+.technique__verdict--yes {
+  background: color-mix(in srgb, #2ecc71 25%, transparent);
+  color: #2ecc71;
+  border: var(--stroke-2) solid color-mix(in srgb, #2ecc71 60%, transparent);
+}
+
+.technique__verdict--no {
+  background: color-mix(in srgb, #e63946 22%, transparent);
+  color: #e63946;
+  border: var(--stroke-2) solid color-mix(in srgb, #e63946 55%, transparent);
+}
+
+.technique__verdict-mark {
+  font-size: 1.4em;
+  line-height: 1;
+}
+
+.technique__dots {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.technique__dot {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  opacity: 0.25;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.technique__dot--active {
+  opacity: 0.9;
+  background: var(--tool-active);
+  transform: scale(1.3);
+}
+
+.technique--static {
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.technique__static-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+@keyframes technique-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 0.9; transform: translateY(0); }
+}
+
+@keyframes technique-pop-in {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .technique__digit,
+  .technique__formula,
+  .technique__verdict,
+  .technique__dot {
+    transition: none;
+    animation: none;
+  }
+}
