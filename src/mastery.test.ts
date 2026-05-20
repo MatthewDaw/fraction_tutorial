@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { clearEvents, getAllEvents } from './analytics';
 import {
   clearMastery,
   getMasteryStatus,
@@ -8,6 +9,7 @@ import {
 describe('mastery module', () => {
   beforeEach(() => {
     clearMastery();
+    clearEvents();
   });
 
   describe('getMasteryStatus', () => {
@@ -99,6 +101,22 @@ describe('mastery module', () => {
     it('treats malformed JSON as empty state (no throw)', () => {
       localStorage.setItem('fractical:mastery', '{not json');
       expect(getMasteryStatus('divide-by-2')).toBe('unstarted');
+    });
+  });
+
+  describe('analytics wire', () => {
+    it('emits a lesson_completed event for a lesson concept', () => {
+      recordMastery('divide-by-2', 1);
+      const events = getAllEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({ type: 'lesson_completed', conceptId: 'divide-by-2' });
+    });
+
+    it('emits a capstone_attempted event with attemptCount for final-assessment', () => {
+      recordMastery('final-assessment', 3);
+      const events = getAllEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({ type: 'capstone_attempted', attemptCount: 3 });
     });
   });
 });

@@ -7,6 +7,7 @@
 // The capstone attempt counter persists separately so a student who reloads
 // mid-capstone stays on attempt N.
 
+import { recordAnalyticsEvent } from './analytics';
 import { V2ConceptId } from './v2lessons';
 
 const MASTERY_KEY = 'fractical:mastery';
@@ -56,6 +57,11 @@ export const recordMastery = (
   const firstCompletedAt = state[conceptId]?.firstCompletedAt ?? Date.now();
   state[conceptId] = { firstCompletedAt, attempts: attemptCount };
   writeState(state);
+  recordAnalyticsEvent(
+    conceptId === 'final-assessment'
+      ? { ts: Date.now(), type: 'capstone_attempted', attemptCount }
+      : { ts: Date.now(), type: 'lesson_completed', conceptId },
+  );
 };
 
 export const getMasteryStatus = (conceptId: V2ConceptId): MasteryStatus => {
