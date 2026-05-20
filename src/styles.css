@@ -2146,3 +2146,31 @@ button {
   background: rgba(255, 99, 132, 0.18);
   color: rgb(255, 200, 210);
 }
+
+/* === Lane B: mushroom palette expansion (×7, ×11) === */
+
+/* Purple ×11 cap. Mirrors --cap / --cap-shade convention from the existing
+   .mushroom-icon--p{2,3,5,7} rules above. The MushroomIcon SVG paints colors
+   via inline attributes too, so this rule is the source of truth for any
+   non-SVG consumers (e.g. .piece-tag--p11 below). */
+.mushroom-icon--p11 { --cap: #a259ff; --cap-shade: #6a2eb8; }
+
+/* When the MushroomIcon SVG component renders, it overrides the legacy fixed
+   18×20 .mushroom-icon box so the per-prime cap silhouettes get room to
+   breathe. SVGs render at the size their author requested via the width
+   attribute on <svg>; we just neutralize the legacy block-level constraints. */
+svg.mushroom-icon {
+  width: auto;
+  height: auto;
+  display: inline-block;
+  vertical-align: middle;
+  background: transparent;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+/* Companion piece-tag rule for ×11 leaves. Mirrors the .piece-tag--p7 rule
+   above. */
+.piece-tag--p11 { --cap: #a259ff; --cap-shade: #6a2eb8; }
+
+/* === END Lane B === */
+

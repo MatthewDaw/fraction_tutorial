@@ -14,6 +14,8 @@ export type V2ConceptId =
   | 'divisibility-3'
   | 'divide-by-5'
   | 'divisibility-5'
+  | 'divisibility-7'
+  | 'divisibility-11'
   | 'factors-of-one'
   | 'factor-pairs'
   | 'gcf-venn';
@@ -25,6 +27,8 @@ export const V2_CONCEPTS: V2ConceptId[] = [
   'divisibility-3',
   'divide-by-5',
   'divisibility-5',
+  'divisibility-7',
+  'divisibility-11',
   'factors-of-one',
   'factor-pairs',
   'gcf-venn',
@@ -37,9 +41,11 @@ export const V2_CONCEPT_LABELS: Record<V2ConceptId, string> = {
   'divisibility-3': '4 - Divisible By 3',
   'divide-by-5': '5 - Divide By 5',
   'divisibility-5': '6 - Divisible By 5',
-  'factors-of-one': '7 - Factors Of A Number',
-  'factor-pairs': '8 - Factor Pairs',
-  'gcf-venn': '9 - Greatest Common Factor',
+  'divisibility-7': '7 - Divisible By 7',
+  'divisibility-11': '8 - Divisible By 11',
+  'factors-of-one': '9 - Factors Of A Number',
+  'factor-pairs': '10 - Factor Pairs',
+  'gcf-venn': '11 - Greatest Common Factor',
 };
 
 export type V2ModuleId = 'prime-dividing' | 'common-factors';
@@ -59,6 +65,8 @@ export const V2_MODULE_CONCEPTS: Record<V2ModuleId, V2ConceptId[]> = {
     'divisibility-3',
     'divide-by-5',
     'divisibility-5',
+    'divisibility-7',
+    'divisibility-11',
   ],
   'common-factors': ['factors-of-one', 'factor-pairs', 'gcf-venn'],
 };
@@ -533,7 +541,181 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
     },
     {
       prompt:
-        "Nice work! You've got divisibility tricks for 2, 3, and 5.\n\nWhen you see a fraction like 1/N:\n• N ends in 0, 2, 4, 6, or 8? Grab the 2 hammer.\n• N's digits sum to 3, 6, or 9? Grab the 3 hammer.\n• N ends in 0 or 5? Grab the 5 hammer.\n\nUp next: how to find ALL the factors of a number.",
+        "Nice work! You've got divisibility tricks for 2, 3, and 5.\n\nWhen you see a fraction like 1/N:\n• N ends in 0, 2, 4, 6, or 8? Grab the 2 hammer.\n• N's digits sum to 3, 6, or 9? Grab the 3 hammer.\n• N ends in 0 or 5? Grab the 5 hammer.\n\nUp next: a trickier divisor — 7. The trick is sneakier, but it works on numbers as big as you'd like.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  'divisibility-7': [
+    {
+      prompt:
+        "Welcome to lesson 7!\n\nNow we level up. 7 doesn't have a simple last-digit rule like 2 or 5, and its digit sum isn't useful like 3's. But there IS a trick — it's just a little sneakier.\n\nLet's start the way we always do: drag dots into groups and see which numbers fit.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Start with 14 dots. Drag them into groups of 7 — if every dot fits, then 14 IS divisible by 7.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-grouped',
+      canvas: { kind: 'dots', count: 14, groupSize: 7 },
+    },
+    {
+      prompt:
+        "14 split into 2 perfect groups of 7. ✓\n\nNow try 21 dots into groups of 7.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-grouped',
+      canvas: { kind: 'dots', count: 21, groupSize: 7 },
+    },
+    {
+      prompt:
+        "21 worked too. ✓\n\nHow about 18?",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-maxed',
+      canvas: { kind: 'dots', count: 18, groupSize: 7 },
+    },
+    {
+      prompt:
+        "18 fills 2 groups of 7 with 4 left over — 18 is NOT divisible by 7.\n\nTry 35.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-grouped',
+      canvas: { kind: 'dots', count: 35, groupSize: 7 },
+    },
+    {
+      prompt:
+        "35 split into 5 clean groups of 7. ✓\n\nLast one: 25.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-maxed',
+      canvas: { kind: 'dots', count: 25, groupSize: 7 },
+    },
+    {
+      prompt:
+        "Look at what worked:\n• 14 ✓  21 ✓  35 ✓\n• 18 ✗  25 ✗\n\nDragging dots is fine for small numbers, but what about 364? Or 819? Time to learn the 7 trick.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Here's the 7 trick:\n\n1. Look at the LAST digit of your number.\n2. DOUBLE it.\n3. SUBTRACT that from the rest of the number (everything except the last digit).\n4. If the result is divisible by 7 (or is 0), so is the original.\n\nExample: 364 → last digit is 4, doubled is 8. The rest is 36. 36 − 8 = 28. And 28 = 7 × 4. ✓\n\nIf your result is still big, do the trick again on IT.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Time to drill it. For each number, apply the trick — double the last digit, subtract from the rest, check if the result is divisible by 7.\n\nGet every answer right to move on. Miss any and you get a fresh worksheet to try again.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'worksheet-passed',
+      canvas: {
+        kind: 'worksheet',
+        divisor: 7,
+        count: 10,
+        passPct: 1,
+        emphasis: 'all-digits',
+        yesPool: [14, 21, 28, 35, 49, 56, 63, 77, 84, 91, 119, 154, 175, 217, 364, 441, 539, 651, 728, 819],
+        noPool: [15, 22, 25, 33, 40, 51, 58, 64, 75, 82, 95, 100, 117, 124, 153, 215, 309, 422, 510, 730],
+      },
+    },
+    {
+      prompt:
+        "Nice work! You've got the divisibility-by-7 trick.\n\nDouble the last digit, subtract from the rest, check if the result is divisible by 7. Repeat if you need to for big numbers.\n\nUp next: one more divisibility trick — for 11. Its rule is the most elegant of them all.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  'divisibility-11': [
+    {
+      prompt:
+        "Welcome to lesson 8!\n\nLast divisibility lesson, and 11 is the most surprising one. Its rule uses ADDING AND SUBTRACTING digits in alternating fashion.\n\nWe'll start as always: which numbers split evenly into 11s?",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Start with 22 dots. Drag them into groups of 11 — if every dot fits, then 22 IS divisible by 11.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-grouped',
+      canvas: { kind: 'dots', count: 22, groupSize: 11 },
+    },
+    {
+      prompt:
+        "22 made 2 perfect groups of 11. ✓\n\nTry 33 dots into groups of 11.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-grouped',
+      canvas: { kind: 'dots', count: 33, groupSize: 11 },
+    },
+    {
+      prompt:
+        "33 worked too. ✓\n\nHow about 25?",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-maxed',
+      canvas: { kind: 'dots', count: 25, groupSize: 11 },
+    },
+    {
+      prompt:
+        "25 fills 2 groups of 11 with 3 left over — 25 is NOT divisible by 11.\n\nNow try 44.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-grouped',
+      canvas: { kind: 'dots', count: 44, groupSize: 11 },
+    },
+    {
+      prompt:
+        "44 split into 4 clean groups of 11. ✓\n\nLast one: 30.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-maxed',
+      canvas: { kind: 'dots', count: 30, groupSize: 11 },
+    },
+    {
+      prompt:
+        "Look at what worked:\n• 22 ✓  33 ✓  44 ✓\n• 25 ✗  30 ✗\n\nFor a number like 957 or 1,452, dragging is hopeless. Luckily 11's trick is wild.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Here's the 11 trick:\n\nTake an ALTERNATING SUM of the digits. Start from the left: ADD the first digit, SUBTRACT the second, ADD the third, SUBTRACT the fourth, and so on.\n\nIf the result is divisible by 11 (or is 0), so is the original.\n\nExamples:\n• 132 → 1 − 3 + 2 = 0 ✓\n• 957 → 9 − 5 + 7 = 11 ✓\n• 121 → 1 − 2 + 1 = 0 ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Time to drill it. For each number, take the alternating sum of its digits and check if the result is divisible by 11 (or is 0).\n\nGet every answer right to move on. Miss any and you get a fresh worksheet to try again.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'worksheet-passed',
+      canvas: {
+        kind: 'worksheet',
+        divisor: 11,
+        count: 10,
+        passPct: 1,
+        emphasis: 'all-digits',
+        yesPool: [22, 33, 44, 55, 66, 77, 88, 99, 121, 132, 143, 154, 165, 209, 286, 363, 484, 583, 671, 869],
+        noPool: [12, 23, 34, 45, 56, 67, 78, 89, 100, 122, 145, 213, 318, 425, 567, 619, 712, 824, 950, 137],
+      },
+    },
+    {
+      prompt:
+        "Incredible! You've got divisibility tricks for 2, 3, 5, 7, AND 11.\n\nThat's a full toolbox of prime divisibility checks. Any time you see a fraction's denominator, you can break it down.\n\nUp next: now that you can find which primes divide a number, let's find ALL the factors of a number.",
       initialState: createRootPiece(),
       allowedOps: [],
       completeOn: 'next-button',
@@ -704,6 +886,8 @@ export const V2_LESSON_TABS: Record<V2ConceptId, V2Tab[]> = {
   'divisibility-3': ['lesson'],
   'divide-by-5': ['lesson'],
   'divisibility-5': ['lesson'],
+  'divisibility-7': ['lesson'],
+  'divisibility-11': ['lesson'],
   'factors-of-one': ['lesson'],
   'factor-pairs': ['lesson'],
   'gcf-venn': ['lesson'],
