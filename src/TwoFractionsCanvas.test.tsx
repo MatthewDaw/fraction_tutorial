@@ -204,7 +204,7 @@ describe('<TwoFractionsCanvas />', () => {
     expect(denoms()[0]).toBe('4'); // 1/2 × 2 = 2/4
   });
 
-  it('snap-back timer cleanup runs on unmount without throwing', () => {
+  it('snap-back timer is cleared on unmount (no pending timer, no throw on flush)', () => {
     vi.useFakeTimers();
     try {
       const { unmount } = render(<Host initialLeft={side(1, 4)} initialRight={side(2, 4)} />);
@@ -215,11 +215,15 @@ describe('<TwoFractionsCanvas />', () => {
       stubRect(rightEl, { left: 200, right: 210, top: 0, bottom: 10, width: 10, height: 10 });
       firePointer('pointerDown', rightEl, { pointerId: 1, clientX: 205, clientY: 5 });
       firePointer('pointerUp', rightEl, { pointerId: 1, clientX: 500, clientY: 500 });
+      // A snap-back timer should be pending after the off-target drop.
+      expect(vi.getTimerCount()).toBeGreaterThan(0);
       unmount();
+      // Unmount cleanup must clear the snap-back timer.
+      expect(vi.getTimerCount()).toBe(0);
+      // Flushing now must not call into the unmounted component.
       act(() => {
         vi.runAllTimers();
       });
-      // No throw → cleanup worked.
     } finally {
       vi.useRealTimers();
     }
