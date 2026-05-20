@@ -1,30 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { colorForDenominator } from './fractions';
+import MultiplierPanel, { MUSHROOM_PRIMES, MushroomPrime, MUSHROOM_COLORS } from './MultiplierPanel';
 
 // A single side of the two-fraction board carries its own scale state. The
-// `multipliers` map mirrors the eventual shared-with-Lane-B Multipliers
-// system: prime → exponent count. Per D7 we don't add new AllowedOps; the
-// per-side mushroom toolbar bumps the count directly and the displayed
-// num/denom are `base × ∏ p^count`. Combine (T5) reads the displayed pair.
+// `multipliers` map mirrors the canonical Multipliers system (Lane B):
+// prime → exponent count. Per D7 we don't add new AllowedOps; the per-side
+// mushroom toolbar bumps the count directly and the displayed num/denom are
+// `base × ∏ p^count`. Combine (T5) reads the displayed pair.
 export type SideMultipliers = Record<number, number>;
 
 export type FractionSide = {
   num: number;
   denom: number;
   multipliers: SideMultipliers;
-};
-
-// Primes the per-side toolbar offers. Mirrors LESSONS.md D8 mushroom palette.
-// Lane B owns the canonical MUSHROOM_PRIMES; we re-declare locally so this
-// file can compile in parallel and the lanes can converge later.
-const SIDE_PRIMES = [2, 3, 5, 7, 11];
-
-const PRIME_COLORS: Record<number, string> = {
-  2: '#e63946',
-  3: '#2ecc71',
-  5: '#ffcb05',
-  7: '#4cc9f0',
-  11: '#a259ff',
 };
 
 export const multiplierFactor = (m: SideMultipliers): number => {
@@ -59,8 +47,9 @@ const decPrime = (m: SideMultipliers, p: number): SideMultipliers => {
 type SideStub = {
   side: 'left' | 'right';
   fraction: FractionSide;
-  onAddPrime: (p: number) => void;
+  onAddPrime: (p: MushroomPrime) => void;
   onDecPrime: (p: number) => void;
+  available: readonly MushroomPrime[];
   draggable: boolean;
   isDragSource: boolean;
   showDropZone: boolean;
@@ -72,21 +61,13 @@ type SideStub = {
   snappingBack?: boolean;
 };
 
-const MushroomGlyph = ({ p }: { p: number }) => (
-  <span className={`mushroom-icon mushroom-icon--p${p}`} aria-hidden>
-    <span className="mushroom-icon__cap" />
-    <span className="mushroom-icon__spot mushroom-icon__spot--a" />
-    <span className="mushroom-icon__spot mushroom-icon__spot--b" />
-    <span className="mushroom-icon__stem" />
-  </span>
-);
-
 const SideBlock = (props: SideStub) => {
   const {
     side,
     fraction,
     onAddPrime,
     onDecPrime,
+    available,
     draggable,
     isDragSource,
     showDropZone,
@@ -121,13 +102,15 @@ const SideBlock = (props: SideStub) => {
       ? { transform: `translate(${dragTranslate.x}px, ${dragTranslate.y}px)` }
       : undefined;
 
-  // Each prime in the multipliers shows a small decrement chip; the per-side
-  // toolbar's primes increment. This is a stub UI — Lane B's MultiplierPanel
-  // will eventually replace it with the canonical control.
-  const activePrimes = Object.keys(fraction.multipliers)
-    .map(Number)
-    .filter((p) => (fraction.multipliers[p] ?? 0) > 0)
-    .sort((a, b) => a - b);
+  // Each prime in the multipliers shows a small decrement chip; the
+  // MultiplierPanel below the fraction box bumps the count up. The chip's
+  // colour mirrors the mushroom cap for the same prime so the increment and
+  // decrement read as the same control surface. Only canonical mushroom
+  // primes get chips — multipliers picked up from anywhere else would be
+  // colourless and confusing, so we filter them out.
+  const activePrimes = (MUSHROOM_PRIMES as readonly number[]).filter(
+    (p) => (fraction.multipliers[p] ?? 0) > 0,
+  );
 
   return (
     <div className={sideClasses}>
@@ -157,7 +140,7 @@ const SideBlock = (props: SideStub) => {
                 key={p}
                 type="button"
                 className="two-fraction__prime-chip"
-                style={{ background: PRIME_COLORS[p] }}
+                style={{ background: MUSHROOM_COLORS[p as MushroomPrime].cap }}
                 aria-label={`Decrement multiplier by ${p}`}
                 onClick={() => onDecPrime(p)}
               >
@@ -168,19 +151,16 @@ const SideBlock = (props: SideStub) => {
           </div>
         )}
       </div>
-      <div className="two-fraction__toolbar" role="toolbar" aria-label={`${side} mushrooms`}>
-        {SIDE_PRIMES.map((p) => (
-          <button
-            key={p}
-            type="button"
-            className="two-fraction__mushroom-btn"
-            aria-label={`Multiply by ${p}`}
-            onClick={() => onAddPrime(p)}
-          >
-            <MushroomGlyph p={p} />
-            <span className="two-fraction__mushroom-label">×{p}</span>
-          </button>
-        ))}
+      <div
+        className="two-fraction__toolbar-wrap"
+        role="toolbar"
+        aria-label={`${side} mushrooms`}
+      >
+        <MultiplierPanel
+          activePrime={null}
+          available={available}
+          onSelect={(p) => p != null && onAddPrime(p)}
+        />
       </div>
     </div>
   );
@@ -198,6 +178,10 @@ type Props = {
   // Fires when both sides' displayed denominators match. Used by the parent
   // to advance lesson/test phase state ('both-sides-same-denom' completion).
   onMatchedBases?: (matchedDenom: number) => void;
+  // Subset of MUSHROOM_PRIMES each side's toolbar exposes. Defaults to the
+  // full palette. The parent narrows this based on per-concept mastery —
+  // e.g. ×7 is hidden until divisibility-7 is complete.
+  availablePrimes?: readonly MushroomPrime[];
 };
 
 const TwoFractionsCanvas = ({
@@ -207,6 +191,7 @@ const TwoFractionsCanvas = ({
   onChangeRight,
   onCombine,
   onMatchedBases,
+  availablePrimes = MUSHROOM_PRIMES,
 }: Props) => {
   const leftDisp = displayedFraction(left);
   const rightDisp = displayedFraction(right);
@@ -295,6 +280,7 @@ const TwoFractionsCanvas = ({
         fraction={left}
         onAddPrime={(p) => onChangeLeft({ ...left, multipliers: incPrime(left.multipliers, p) })}
         onDecPrime={(p) => onChangeLeft({ ...left, multipliers: decPrime(left.multipliers, p) })}
+        available={availablePrimes}
         draggable={false}
         isDragSource={false}
         showDropZone={showDropZone}
@@ -311,6 +297,7 @@ const TwoFractionsCanvas = ({
         fraction={right}
         onAddPrime={(p) => onChangeRight({ ...right, multipliers: incPrime(right.multipliers, p) })}
         onDecPrime={(p) => onChangeRight({ ...right, multipliers: decPrime(right.multipliers, p) })}
+        available={availablePrimes}
         draggable={matched}
         isDragSource={dragging}
         showDropZone={false}

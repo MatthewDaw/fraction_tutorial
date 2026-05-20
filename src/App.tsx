@@ -14,6 +14,16 @@ import WorksheetCanvas from './WorksheetCanvas';
 import TwoFractionsCanvas, { FractionSide } from './TwoFractionsCanvas';
 import CapstoneEndCard, { CapstoneProblem } from './CapstoneEndCard';
 import PhaseIndicator, { CapstonePhase } from './PhaseIndicator';
+import MultiplierPanel, {
+  MUSHROOM_PRIMES,
+  MushroomPrime,
+  primeFromScaleOp,
+} from './MultiplierPanel';
+import {
+  getMasteryStatus,
+  incrementCapstoneAttempts,
+  recordMastery,
+} from './mastery';
 import { factorsOf, gcf } from './factors';
 import {
   Piece,
@@ -400,6 +410,11 @@ const App = () => {
     if (v2Animation) return;
     const steps = V2_LESSONS[v2ConceptId];
     if (v2StepIdx >= steps.length - 1) {
+      // Reaching the recap-step's Next button = lesson concept completed.
+      // Capstone (final-assessment) records mastery on phase-end, not here.
+      if (v2Tab === 'lesson' && v2ConceptId !== 'final-assessment') {
+        recordMastery(v2ConceptId, 1);
+      }
       // End of the lesson — chain forward so the student never dead-ends.
       // Route order: test (if this lesson has one) → next concept → stay put.
       if (v2Tab === 'lesson' && V2_LESSON_TABS[v2ConceptId].includes('test')) {
@@ -483,6 +498,29 @@ const App = () => {
       v2DotsMaxedShowNext) &&
     (!v2IsLastStep || v2NextGoesToTest || v2NextGoesToNextLesson) &&
     !v2GuessPending;
+
+  // Mushroom palette gating: ×7 unlocks once divisibility-7 is mastered;
+  // ×11 once divisibility-11 is mastered. The dep on v2ConceptId triggers
+  // re-evaluation when the student navigates between concepts — localStorage
+  // reads aren't reactive, so we use navigation as a refresh signal.
+  const availablePrimes: readonly MushroomPrime[] = useMemo(() => {
+    const seven = getMasteryStatus('divisibility-7') === 'mastered';
+    const eleven = getMasteryStatus('divisibility-11') === 'mastered';
+    return MUSHROOM_PRIMES.filter(
+      (p) => (p !== 7 || seven) && (p !== 11 || eleven),
+    );
+  }, [v2ConceptId]);
+
+  // App-level multiplier toolbar state. Activates only when a lesson exposes
+  // scale:N ops — no current lesson does, but the wiring lights up the
+  // moment one is added. TwoFractionsCanvas owns its own per-side panels.
+  const [v2ActivePrime, setV2ActivePrime] = useState<MushroomPrime | null>(null);
+  const v2ScalePrimes = useMemo<readonly MushroomPrime[]>(() => {
+    const fromOps = new Set(
+      question.allowedOps.map(primeFromScaleOp).filter((p): p is MushroomPrime => p != null),
+    );
+    return availablePrimes.filter((p) => fromOps.has(p));
+  }, [question.allowedOps, availablePrimes]);
 
   const v2ActiveTest = v2Tab === 'test' ? V2_LESSON_TESTS[v2ConceptId] : undefined;
   const v2ActiveStepTest =
@@ -666,7 +704,13 @@ const App = () => {
     setMultiPhaseProblems(nextProblems);
     setMultiPhaseProblemsCompleted(nextCompleted);
     if (nextCompleted >= v2ActiveMultiPhase.totalProblems) {
-      setMultiPhasePassed(nextCompleted >= v2ActiveMultiPhase.passThreshold);
+      const passed = nextCompleted >= v2ActiveMultiPhase.passThreshold;
+      setMultiPhasePassed(passed);
+      // Bump the capstone attempt counter — this is one full run, pass or
+      // fail. Only record mastery when the student passes; failed runs still
+      // count toward the attempt total so the next pass is attempt N+1.
+      const attemptCount = incrementCapstoneAttempts();
+      if (passed) recordMastery('final-assessment', attemptCount);
       // Leave state alone — the end-card renders from problemsCompleted.
       return;
     }
@@ -732,6 +776,7 @@ const App = () => {
             onChangeRight={setMultiPhaseRight}
             onCombine={handleTwoFractionCombine}
             onMatchedBases={handleTwoFractionMatched}
+            availablePrimes={availablePrimes}
           />
         );
       }
@@ -849,6 +894,7 @@ const App = () => {
             key={`${v2ConceptId}-${v2StepIdx}`}
             initialLeft={canvas.left}
             initialRight={canvas.right}
+            availablePrimes={availablePrimes}
             onMatched={markIf('both-sides-same-denom')}
             onCombined={markIf('combined')}
           />
@@ -954,6 +1000,13 @@ const App = () => {
               allowedOps={question.allowedOps}
               onSelect={handleToolSelect}
             />
+            {v2ScalePrimes.length > 0 && (
+              <MultiplierPanel
+                activePrime={v2ActivePrime}
+                available={v2ScalePrimes}
+                onSelect={setV2ActivePrime}
+              />
+            )}
           </div>
           {v2Animation && (
             <HammerRevealOverlay
@@ -973,6 +1026,7 @@ const App = () => {
 type LessonTwoFractionsProps = {
   initialLeft: { num: number; denom: number };
   initialRight: { num: number; denom: number };
+  availablePrimes?: readonly MushroomPrime[];
   onMatched?: () => void;
   onCombined?: () => void;
 };
@@ -980,6 +1034,7 @@ type LessonTwoFractionsProps = {
 const LessonTwoFractionsCanvas = ({
   initialLeft,
   initialRight,
+  availablePrimes,
   onMatched,
   onCombined,
 }: LessonTwoFractionsProps) => {
@@ -1025,6 +1080,7 @@ const LessonTwoFractionsCanvas = ({
         onCombined?.();
       }}
       onMatchedBases={() => onMatched?.()}
+      availablePrimes={availablePrimes}
     />
   );
 };
