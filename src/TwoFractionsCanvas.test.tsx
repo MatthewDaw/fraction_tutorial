@@ -103,7 +103,7 @@ describe('<TwoFractionsCanvas />', () => {
     render(<Host initialLeft={side(1, 2)} initialRight={side(1, 3)} />);
     const user = userEvent.setup();
     const leftToolbar = screen.getByRole('toolbar', { name: /left mushrooms/i });
-    await user.click(leftToolbar.querySelector('button[aria-label="Multiply by 2"]')!);
+    await user.click(leftToolbar.querySelector('button[aria-label="Multiplier: multiply by 2"]')!);
     // Left now shows 2/4; right still 1/3.
     expect(denoms()).toEqual(['4', '3']);
     expect(nums()).toEqual(['2', '1']);
@@ -118,9 +118,9 @@ describe('<TwoFractionsCanvas />', () => {
     const user = userEvent.setup();
     const leftToolbar = screen.getByRole('toolbar', { name: /left mushrooms/i });
     const rightToolbar = screen.getByRole('toolbar', { name: /right mushrooms/i });
-    await user.click(leftToolbar.querySelector('button[aria-label="Multiply by 3"]')!); // left 3/6
+    await user.click(leftToolbar.querySelector('button[aria-label="Multiplier: multiply by 3"]')!); // left 3/6
     expect(onMatchedBases).not.toHaveBeenCalled();
-    await user.click(rightToolbar.querySelector('button[aria-label="Multiply by 2"]')!); // right 2/6
+    await user.click(rightToolbar.querySelector('button[aria-label="Multiplier: multiply by 2"]')!); // right 2/6
     expect(onMatchedBases).toHaveBeenCalledTimes(1);
     expect(onMatchedBases).toHaveBeenCalledWith(6);
   });
@@ -195,8 +195,8 @@ describe('<TwoFractionsCanvas />', () => {
     render(<Host initialLeft={side(1, 2)} initialRight={side(1, 3)} />);
     const user = userEvent.setup();
     const leftToolbar = screen.getByRole('toolbar', { name: /left mushrooms/i });
-    await user.click(leftToolbar.querySelector('button[aria-label="Multiply by 2"]')!);
-    await user.click(leftToolbar.querySelector('button[aria-label="Multiply by 2"]')!);
+    await user.click(leftToolbar.querySelector('button[aria-label="Multiplier: multiply by 2"]')!);
+    await user.click(leftToolbar.querySelector('button[aria-label="Multiplier: multiply by 2"]')!);
     // Left displayed = 1/2 × 2^2 = 4/8.
     expect(denoms()[0]).toBe('8');
     // The decrement chip for ×2 should now be present.
