@@ -1762,14 +1762,9 @@ export const generateCapstoneProblem = (): V2CapstoneProblem => {
   }
   // Practically unreachable: relax dedup so the test stays playable instead
   // of throwing if the (already dense) legal-pair space somehow exhausts.
-  const leftDenom = pickDenom();
-  const rightDenom = leftDenom === 12 ? 11 : pickDenom();
-  return toProblem({
-    leftNum: pickNumerator(leftDenom),
-    leftDenom,
-    rightNum: pickNumerator(rightDenom),
-    rightDenom,
-  });
+  // The fallback must still satisfy denom!==denom and product<=MAX, so we
+  // hard-code a known-good pair instead of re-rolling.
+  return toProblem({ leftNum: 1, leftDenom: 2, rightNum: 1, rightDenom: 3 });
 };
 
 // Each test cumulates the hammers from the current lesson and all previous
