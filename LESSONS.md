@@ -317,6 +317,8 @@ Generator constraints (all required):
 
 Synthesized from CEO review + eng review. Each task derives from a specific decision or finding. Check off as shipped.
 
+**Grouped into batches in [`batches/`](batches/README.md).** Lanes A and B already shipped via parallel agents (commits `2b495a4` and `8023190`, merged into `b4104cf`). Remaining work is split into batches C through H. The critical path to ship is C + D in parallel, then E. F/G/H are post-ship maturity.
+
 ### Phase 1 — Primitive playground (per D1, revised after D7)
 
 - [ ] ~~**T1**~~ **CUT (per D7)** — No `rewriteLeaves` helper needed. The existing Multipliers system covers scale/merge.

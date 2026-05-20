@@ -292,7 +292,7 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
     firstSmash:
       'You got the 2 hammer! It splits any piece into 2 equal parts.\n\nClick the 2 hammer, then SMASH the block!',
     wows: [
-      "Wow! You broke the whole block into 2 equal pieces.\n\nEach piece is 1/2 — say 'one half'.\n\nThe top number 1 is how many pieces you're talking about, and the bottom number 2 is how many equal pieces make up the whole.",
+      "You broke the whole block into 2 equal pieces.\n\nEach piece is 1/2 — say 'one half'.\n\nThe top number 1 is how many pieces you're talking about, and the bottom number 2 is how many equal pieces make up the whole.",
       "Awesome! Now you've got 4 equal pieces.\n\nEach one is 1/4 of the whole — 'one quarter'.\n\nSplitting every half in half doubled the count from 2 to 4. Four 1/4 pieces still add up to one whole!",
       'Now you have 8 pieces, each 1/8 of the whole.\n\nEvery time the 2 hammer strikes, the denominator — the bottom number — doubles: 2 → 4 → 8.\n\nThe pieces shrink, but together they always equal 1 whole.',
       '16 tiny pieces, each 1/16 of the original!\n\nThe bigger the denominator, the smaller each piece.\n\nBut every piece on the board still adds up to the same whole block.',
