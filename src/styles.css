@@ -1664,6 +1664,9 @@ button {
   color: var(--tool-fg);
   font-size: 14px;
   font-weight: 600;
+  /* WCAG 2.5.5 touch target floor: >=44px. */
+  min-width: clamp(44px, 5vmin, 56px);
+  min-height: clamp(44px, 5vmin, 56px);
 }
 
 .tool-btn:hover {
@@ -2592,12 +2595,6 @@ svg.mushroom-icon {
 .piece-tag--p11 { --cap: #a259ff; --cap-shade: #6a2eb8; }
 
 /* === END Lane B === */
-
-/* Touch target floor: WCAG 2.5.5 requires >=44px. */
-.tool-btn {
-  min-width: clamp(44px, 5vmin, 56px);
-  min-height: clamp(44px, 5vmin, 56px);
-}
 
 button:focus-visible,
 a:focus-visible,
