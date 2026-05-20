@@ -2593,24 +2593,15 @@ svg.mushroom-icon {
 
 /* === END Lane B === */
 
-/* === Batch D: Nunito typography === */
-/* Marker only — font swap is in-place on the html/body/#root rule above;
-   imports live in src/main.tsx. Keep this sentinel for merge tooling. */
-/* === end Batch D === */
-
-/* === Batch D: Touch target floor (WCAG 2.5.5, ≥44px) === */
+/* Touch target floor: WCAG 2.5.5 requires >=44px. */
 .tool-btn {
   min-width: clamp(44px, 5vmin, 56px);
   min-height: clamp(44px, 5vmin, 56px);
 }
-/* === end Batch D === */
 
-/* === Batch D: Focus-visible outlines === */
-/* Yellow ring for keyboard / assistive-tech users on a tablet-first product. */
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible {
   outline: 2px solid var(--tool-active);
   outline-offset: 2px;
 }
-/* === end Batch D === */
