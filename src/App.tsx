@@ -11,7 +11,10 @@ import ArrayCanvas from './ArrayCanvas';
 import CommonFactorsCanvas from './CommonFactorsCanvas';
 import VennCanvas from './VennCanvas';
 import WorksheetCanvas from './WorksheetCanvas';
-import { factorsOf } from './factors';
+import TwoFractionsCanvas, { FractionSide } from './TwoFractionsCanvas';
+import CapstoneEndCard, { CapstoneProblem } from './CapstoneEndCard';
+import PhaseIndicator, { CapstonePhase } from './PhaseIndicator';
+import { factorsOf, gcf } from './factors';
 import {
   Piece,
   canDivide,
@@ -29,9 +32,11 @@ import {
 import {
   MAX_TEST_QUESTIONS,
   V2Animation,
+  V2CapstoneProblem,
   V2ConceptId,
+  V2LessonMultiPhaseTest,
+  V2LessonSingleStepTest,
   V2LessonStep,
-  V2LessonTest,
   V2StepCompletion,
   V2Tab,
   V2_CONCEPTS,
@@ -41,6 +46,7 @@ import {
   V2_LESSON_TESTS,
   canReachTarget,
   hammerSizeFromAnim,
+  isMultiPhaseTest,
 } from './v2lessons';
 
 const INITIAL_V2_CONCEPT: V2ConceptId = V2_CONCEPTS[0];
@@ -54,7 +60,7 @@ const lessonStepToQuestion = (step: V2LessonStep): Question => ({
   allowedOps: step.allowedOps,
 });
 
-const buildTestQuizQuestion = (test: V2LessonTest, denom: number): Question => ({
+const buildTestQuizQuestion = (test: V2LessonSingleStepTest, denom: number): Question => ({
   prompt: `Make 1/${denom}!`,
   initialState: createRootPiece(),
   allowedOps: test.allowedOps,
@@ -63,11 +69,12 @@ const buildTestQuizQuestion = (test: V2LessonTest, denom: number): Question => (
   meta: { target: denom },
 });
 
-const buildFreePlayQuestion = (test: V2LessonTest): Question => ({
+const buildFreePlayQuestion = (test: V2LessonSingleStepTest): Question => ({
   prompt: test.prompt ?? '',
   initialState: createRootPiece(),
   allowedOps: test.allowedOps,
 });
+
 
 // When a question exposes exactly one tool, there's no choice to make —
 // arm it for the student so they can act immediately, and never let it be
@@ -111,6 +118,23 @@ const App = () => {
   const [v2TestFailed, setV2TestFailed] = useState(false);
   const v2NextRoundTimer = useRef<number | null>(null);
   const v2FailedTimer = useRef<number | null>(null);
+
+  // ---- Multi-phase capstone state (T13). The discriminated test variant
+  // generates a random pair, walks the student through phase 0 → 1 → 2
+  // (equate → combine → simplify), then loops to the next problem.
+  const [multiPhaseProblem, setMultiPhaseProblem] = useState<V2CapstoneProblem | null>(null);
+  const [multiPhaseLeft, setMultiPhaseLeft] = useState<FractionSide | null>(null);
+  const [multiPhaseRight, setMultiPhaseRight] = useState<FractionSide | null>(null);
+  const [multiPhasePhase, setMultiPhasePhase] = useState<CapstonePhase>(0);
+  const [multiPhaseCombined, setMultiPhaseCombined] = useState<
+    { num: number; denom: number } | null
+  >(null);
+  const [multiPhaseSimplifyDisplay, setMultiPhaseSimplifyDisplay] = useState<
+    { num: number; denom: number } | null
+  >(null);
+  const [multiPhaseProblemsCompleted, setMultiPhaseProblemsCompleted] = useState(0);
+  const [multiPhaseProblems, setMultiPhaseProblems] = useState<CapstoneProblem[]>([]);
+  const [multiPhasePassed, setMultiPhasePassed] = useState(false);
   const [question, setQuestion] = useState<Question>(() =>
     lessonStepToQuestion(V2_LESSONS[INITIAL_V2_CONCEPT][0]),
   );
@@ -171,7 +195,11 @@ const App = () => {
       }
       // V2 test quizzes let the student try any hammer; unsolvable boards
       // are caught by the reachability check and trigger a reset instead.
-      const v2TestFreeHammers = v2Tab === 'test' && !!V2_LESSON_TESTS[v2ConceptId]?.pool;
+      const _activeTest = V2_LESSON_TESTS[v2ConceptId];
+      const v2TestFreeHammers =
+        v2Tab === 'test' &&
+        !isMultiPhaseTest(_activeTest) &&
+        !!_activeTest?.pool;
       if (
         !v2TestFreeHammers &&
         !isCorrectMove(question, root, { kind: 'divide', pieceId: id, n: tool.n })
@@ -200,6 +228,36 @@ const App = () => {
     setTool(next);
   };
 
+  const resetMultiPhase = () => {
+    setMultiPhaseProblem(null);
+    setMultiPhaseLeft(null);
+    setMultiPhaseRight(null);
+    setMultiPhasePhase(0);
+    setMultiPhaseCombined(null);
+    setMultiPhaseSimplifyDisplay(null);
+    setMultiPhaseProblemsCompleted(0);
+    setMultiPhaseProblems([]);
+    setMultiPhasePassed(false);
+  };
+
+  const startMultiPhaseProblem = (test: V2LessonMultiPhaseTest) => {
+    const problem = test.generator();
+    setMultiPhaseProblem(problem);
+    setMultiPhaseLeft({ num: problem.left.num, denom: problem.left.denom, multipliers: {} });
+    setMultiPhaseRight({ num: problem.right.num, denom: problem.right.denom, multipliers: {} });
+    setMultiPhasePhase(0);
+    setMultiPhaseCombined(null);
+    setMultiPhaseSimplifyDisplay(null);
+    // The on-board Question is unused for the twoFractions canvas phases;
+    // keep it benign so the toolbar doesn't pop hammers the student can't
+    // use on this surface.
+    loadQuestion({
+      prompt: '',
+      initialState: createRootPiece(),
+      allowedOps: [],
+    });
+  };
+
   // Load a fresh test question. Options:
   // - reset: blank the asked-denoms history and start from pool[0]
   // - reuseDenom: rerun the same denom (used after the board became unsolvable)
@@ -221,13 +279,30 @@ const App = () => {
     setTool(null);
     const test = V2_LESSON_TESTS[conceptId];
 
-    // Non-quiz tests (free-play or no entry) ignore the asked/complete state.
-    if (!test?.pool || test.pool.length === 0) {
+    // Multi-phase capstone test — start a fresh problem run and bail before
+    // touching the single-step pool machinery.
+    if (isMultiPhaseTest(test)) {
       setV2TestCurrentDenom(null);
       setV2TestAskedDenoms([]);
       setV2TestComplete(false);
-      if (test) {
-        loadQuestion(buildFreePlayQuestion(test));
+      if (opts.reset) {
+        resetMultiPhase();
+        startMultiPhaseProblem(test);
+      } else if (multiPhaseProblem == null) {
+        startMultiPhaseProblem(test);
+      }
+      return;
+    }
+
+    // Single-step (default) variant from here on.
+    const stepTest = test as V2LessonSingleStepTest | undefined;
+    // Non-quiz tests (free-play or no entry) ignore the asked/complete state.
+    if (!stepTest?.pool || stepTest.pool.length === 0) {
+      setV2TestCurrentDenom(null);
+      setV2TestAskedDenoms([]);
+      setV2TestComplete(false);
+      if (stepTest) {
+        loadQuestion(buildFreePlayQuestion(stepTest));
       } else {
         loadQuestion({
           prompt: '',
@@ -242,7 +317,7 @@ const App = () => {
     if (opts.reuseDenom != null) {
       setV2TestCurrentDenom(opts.reuseDenom);
       setV2TestComplete(false);
-      loadQuestion(buildTestQuizQuestion(test, opts.reuseDenom));
+      loadQuestion(buildTestQuizQuestion(stepTest, opts.reuseDenom));
       return;
     }
 
@@ -252,8 +327,8 @@ const App = () => {
         ? [...v2TestAskedDenoms, opts.previousDenom]
         : v2TestAskedDenoms;
     const maxRounds = Math.min(
-      test.pool.length,
-      test.maxQuestions ?? MAX_TEST_QUESTIONS,
+      stepTest.pool.length,
+      stepTest.maxQuestions ?? MAX_TEST_QUESTIONS,
     );
 
     if (asked.length >= maxRounds) {
@@ -264,11 +339,11 @@ const App = () => {
     }
 
     const denom =
-      asked.length === 0 ? test.pool[0] : pickFromRemaining(test.pool, asked);
+      asked.length === 0 ? stepTest.pool[0] : pickFromRemaining(stepTest.pool, asked);
     setV2TestAskedDenoms(asked);
     setV2TestCurrentDenom(denom);
     setV2TestComplete(false);
-    loadQuestion(buildTestQuizQuestion(test, denom));
+    loadQuestion(buildTestQuizQuestion(stepTest, denom));
   };
 
   const loadV2 = (conceptId: V2ConceptId, tab: V2Tab, stepIdx: number) => {
@@ -410,11 +485,19 @@ const App = () => {
     !v2GuessPending;
 
   const v2ActiveTest = v2Tab === 'test' ? V2_LESSON_TESTS[v2ConceptId] : undefined;
+  const v2ActiveStepTest =
+    v2ActiveTest && !isMultiPhaseTest(v2ActiveTest)
+      ? (v2ActiveTest as V2LessonSingleStepTest)
+      : undefined;
+  const v2ActiveMultiPhase = isMultiPhaseTest(v2ActiveTest) ? v2ActiveTest : undefined;
   // The lesson is a quiz test whenever it has a pool — even while showing the
   // completion screen (currentDenom is null then but the UI is still the quiz).
-  const v2TestQuizActive = !!v2ActiveTest?.pool;
-  const v2TestTotalRounds = v2ActiveTest?.pool
-    ? Math.min(v2ActiveTest.pool.length, v2ActiveTest.maxQuestions ?? MAX_TEST_QUESTIONS)
+  const v2TestQuizActive = !!v2ActiveStepTest?.pool;
+  const v2TestTotalRounds = v2ActiveStepTest?.pool
+    ? Math.min(
+        v2ActiveStepTest.pool.length,
+        v2ActiveStepTest.maxQuestions ?? MAX_TEST_QUESTIONS,
+      )
     : 0;
   const v2ConceptIdx = V2_CONCEPTS.indexOf(v2ConceptId);
   const v2NextConceptLabel =
@@ -547,7 +630,7 @@ const App = () => {
     if (!v2TestQuizActive || v2TestCurrentDenom == null) return;
     if (solved || v2TestFailed) return;
     const test = V2_LESSON_TESTS[v2ConceptId];
-    if (!test) return;
+    if (!test || isMultiPhaseTest(test)) return;
     if (canReachTarget(root, v2TestCurrentDenom, test.allowedOps)) return;
     setV2TestFailed(true);
     const denom = v2TestCurrentDenom;
@@ -563,7 +646,106 @@ const App = () => {
     };
   }, [root, v2Tab, v2TestQuizActive, v2TestCurrentDenom, solved, v2TestFailed, v2ConceptId]);
 
+  // -- Multi-phase handlers (T13). Lifted out so both the in-canvas combine
+  // and the simplify-phase auto-detector use the same advance logic.
+  const advanceMultiPhase = () => {
+    if (!v2ActiveMultiPhase) return;
+    const next = (multiPhasePhase + 1) as CapstonePhase;
+    if (next <= 2) {
+      setMultiPhasePhase(next);
+      return;
+    }
+    // End of phase 2: record this problem and roll the next one (or end).
+    const recorded: CapstoneProblem = {
+      left: multiPhaseProblem ? multiPhaseProblem.left : { num: 0, denom: 1 },
+      right: multiPhaseProblem ? multiPhaseProblem.right : { num: 0, denom: 1 },
+      result: multiPhaseSimplifyDisplay ?? multiPhaseCombined ?? undefined,
+    };
+    const nextProblems = [...multiPhaseProblems, recorded];
+    const nextCompleted = multiPhaseProblemsCompleted + 1;
+    setMultiPhaseProblems(nextProblems);
+    setMultiPhaseProblemsCompleted(nextCompleted);
+    if (nextCompleted >= v2ActiveMultiPhase.totalProblems) {
+      setMultiPhasePassed(nextCompleted >= v2ActiveMultiPhase.passThreshold);
+      // Leave state alone — the end-card renders from problemsCompleted.
+      return;
+    }
+    startMultiPhaseProblem(v2ActiveMultiPhase);
+  };
+
+  const handleTwoFractionCombine = (combined: { num: number; denom: number }) => {
+    // Phase 0 → 1 transition (if not already on phase 1) happens via the
+    // matched-bases callback below; the combine drop itself is phase 1's
+    // completion. Either way, we land on phase 2 with the combined value.
+    setMultiPhaseCombined(combined);
+    // Set the simplify display to the combined raw values. The student
+    // decrements primes via the simplify-mini-canvas to reach simplest form.
+    setMultiPhaseSimplifyDisplay(combined);
+    // Skip directly to phase 2 — combine implies bases were matched.
+    setMultiPhasePhase(2);
+  };
+
+  const handleTwoFractionMatched = (_matchedDenom: number) => {
+    // Rising-edge matched bases → advance from phase 0 to phase 1 (combine).
+    if (multiPhasePhase === 0) setMultiPhasePhase(1);
+  };
+
+  // Simplify phase (T19 spec D9): the result canvas is the existing single-
+  // fraction board. We track displayed num/denom locally with the same
+  // multipliers shape as TwoFractionsCanvas — only here multipliers act as
+  // dividers (decrementing the displayed denom). On gcf(num, denom) === 1
+  // we fire the 'simplest-form' completion and advance the problem.
+  useEffect(() => {
+    if (!v2ActiveMultiPhase) return;
+    if (multiPhasePhase !== 2) return;
+    if (!multiPhaseSimplifyDisplay) return;
+    const { num, denom } = multiPhaseSimplifyDisplay;
+    if (gcf(num, denom) !== 1) return;
+    const t = window.setTimeout(() => advanceMultiPhase(), 600);
+    return () => window.clearTimeout(t);
+  }, [multiPhaseSimplifyDisplay, multiPhasePhase, v2ActiveMultiPhase]);
+
   const renderV2Canvas = () => {
+    // Multi-phase capstone takes over the canvas slot in test mode.
+    if (v2Tab === 'test' && v2ActiveMultiPhase) {
+      const totalProblems = v2ActiveMultiPhase.totalProblems;
+      if (multiPhaseProblemsCompleted >= totalProblems) {
+        return (
+          <CapstoneEndCard
+            problemsSolved={multiPhaseProblemsCompleted}
+            totalProblems={totalProblems}
+            problems={multiPhaseProblems}
+            passed={multiPhasePassed}
+            onRetry={() => {
+              resetMultiPhase();
+              startMultiPhaseProblem(v2ActiveMultiPhase);
+            }}
+          />
+        );
+      }
+      if (multiPhasePhase < 2 && multiPhaseLeft && multiPhaseRight) {
+        return (
+          <TwoFractionsCanvas
+            left={multiPhaseLeft}
+            right={multiPhaseRight}
+            onChangeLeft={setMultiPhaseLeft}
+            onChangeRight={setMultiPhaseRight}
+            onCombine={handleTwoFractionCombine}
+            onMatchedBases={handleTwoFractionMatched}
+          />
+        );
+      }
+      if (multiPhasePhase === 2 && multiPhaseSimplifyDisplay) {
+        return (
+          <SimplifyMiniCanvas
+            display={multiPhaseSimplifyDisplay}
+            onChange={setMultiPhaseSimplifyDisplay}
+          />
+        );
+      }
+      return <NumberDisplay />;
+    }
+
     if (v2Tab !== 'lesson') return null;
     const step = v2CurrentStep;
     if (!step) return null;
@@ -661,6 +843,16 @@ const App = () => {
             onPassed={markIf('worksheet-passed')}
           />
         );
+      case 'twoFractions':
+        return (
+          <LessonTwoFractionsCanvas
+            key={`${v2ConceptId}-${v2StepIdx}`}
+            initialLeft={canvas.left}
+            initialRight={canvas.right}
+            onMatched={markIf('both-sides-same-denom')}
+            onCombined={markIf('combined')}
+          />
+        );
     }
   };
 
@@ -721,7 +913,7 @@ const App = () => {
             testComplete={v2TestComplete}
             testTotalRounds={v2TestTotalRounds}
             testAskedCount={v2TestAskedDenoms.length}
-            testHint={v2ActiveTest?.hint}
+            testHint={v2ActiveStepTest?.hint}
             nextLessonLabel={v2NextConceptLabel}
             guessCorrect={v2CurrentStep?.guessAnswer}
             guessExplanation={v2CurrentStep?.guessExplanation}
@@ -739,6 +931,10 @@ const App = () => {
         </section>
 
         <section className="canvas-panel">
+          {v2ActiveMultiPhase &&
+            multiPhaseProblemsCompleted < v2ActiveMultiPhase.totalProblems && (
+              <PhaseIndicator activePhase={multiPhasePhase} />
+            )}
           <div className="canvas-stage">
             {renderV2Canvas() ?? (
               <FractionBox
@@ -767,6 +963,120 @@ const App = () => {
           )}
         </section>
       </main>
+    </div>
+  );
+};
+
+// ----- Lesson-mode two-fraction wrapper. Holds the per-step left/right
+// state internally (resets via `key` when the step changes) and forwards
+// completion signals up to the lesson harness.
+type LessonTwoFractionsProps = {
+  initialLeft: { num: number; denom: number };
+  initialRight: { num: number; denom: number };
+  onMatched?: () => void;
+  onCombined?: () => void;
+};
+
+const LessonTwoFractionsCanvas = ({
+  initialLeft,
+  initialRight,
+  onMatched,
+  onCombined,
+}: LessonTwoFractionsProps) => {
+  const [left, setLeft] = useState<FractionSide>({
+    num: initialLeft.num,
+    denom: initialLeft.denom,
+    multipliers: {},
+  });
+  const [right, setRight] = useState<FractionSide>({
+    num: initialRight.num,
+    denom: initialRight.denom,
+    multipliers: {},
+  });
+  const [combinedResult, setCombinedResult] = useState<
+    { num: number; denom: number } | null
+  >(null);
+
+  if (combinedResult) {
+    return (
+      <div className="two-fraction__result" role="status">
+        <div
+          className="two-fraction__box"
+          style={{ backgroundColor: 'var(--bg-canvas)' }}
+        >
+          <span className="two-fraction__numerals">
+            <span className="two-fraction__num">{combinedResult.num}</span>
+            <span className="two-fraction__bar" />
+            <span className="two-fraction__den">{combinedResult.denom}</span>
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <TwoFractionsCanvas
+      left={left}
+      right={right}
+      onChangeLeft={setLeft}
+      onChangeRight={setRight}
+      onCombine={(combined) => {
+        setCombinedResult(combined);
+        onCombined?.();
+      }}
+      onMatchedBases={() => onMatched?.()}
+    />
+  );
+};
+
+// ----- Simplification mini-canvas for the capstone's phase 2. Per D7 we
+// don't add new ops: a per-prime decrement chip divides both displayed
+// num and denom by that prime when both share it as a factor. This is the
+// minimum viable simplify UI; Lane B's MultiplierPanel will eventually
+// replace it for full Multipliers consistency.
+type SimplifyMiniProps = {
+  display: { num: number; denom: number };
+  onChange: (next: { num: number; denom: number }) => void;
+};
+
+const SIMPLIFY_PRIMES = [2, 3, 5, 7, 11];
+
+const SimplifyMiniCanvas = ({ display, onChange }: SimplifyMiniProps) => {
+  const sharedPrimes = SIMPLIFY_PRIMES.filter(
+    (p) => display.num % p === 0 && display.denom % p === 0,
+  );
+  const isSimplest = gcf(display.num, display.denom) === 1;
+  return (
+    <div className="two-fraction__side two-fraction__side--solo">
+      <div className="two-fraction__fraction">
+        <div
+          className="two-fraction__box"
+          style={{ backgroundColor: 'var(--bg-canvas)' }}
+        >
+          <span className="two-fraction__numerals">
+            <span className="two-fraction__num">{display.num}</span>
+            <span className="two-fraction__bar" />
+            <span className="two-fraction__den">{display.denom}</span>
+          </span>
+        </div>
+      </div>
+      <div className="two-fraction__toolbar" aria-label="Simplify by prime">
+        {isSimplest ? (
+          <span className="two-fraction__simplest-tag">Simplest form ✓</span>
+        ) : (
+          sharedPrimes.map((p) => (
+            <button
+              key={p}
+              type="button"
+              className="two-fraction__mushroom-btn"
+              onClick={() => onChange({ num: display.num / p, denom: display.denom / p })}
+              aria-label={`Divide both by ${p}`}
+            >
+              <span className="two-fraction__mushroom-label">÷{p}</span>
+            </button>
+          ))
+        )}
+      </div>
     </div>
   );
 };

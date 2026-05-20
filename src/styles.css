@@ -2146,3 +2146,422 @@ button {
   background: rgba(255, 99, 132, 0.18);
   color: rgb(255, 200, 210);
 }
+
+/* === Lane A: two-fraction canvas + capstone + phase indicator === */
+
+/* ----- Two-fraction board ----- */
+
+.two-fraction {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+}
+
+.two-fraction__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.two-fraction__side--solo {
+  margin: 0 auto;
+}
+
+.two-fraction__fraction {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: transform 120ms ease, box-shadow 120ms ease, outline-color 120ms ease;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  touch-action: none;
+  user-select: none;
+}
+
+.two-fraction__box {
+  width: clamp(120px, 22vmin, 220px);
+  height: clamp(120px, 22vmin, 220px);
+  border: 2px solid var(--piece-border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.two-fraction__numerals {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 800;
+  font-size: clamp(32px, 6vmin, 56px);
+  line-height: 1;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.two-fraction__num,
+.two-fraction__den {
+  padding: 0 6px;
+}
+
+.two-fraction__bar {
+  display: block;
+  width: 70%;
+  height: 3px;
+  background: currentColor;
+  border-radius: 2px;
+  margin: 4px 0;
+}
+
+.two-fraction__active-primes {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.two-fraction__prime-chip {
+  border: none;
+  color: #1a1a1a;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.two-fraction__prime-chip sup {
+  font-size: 9px;
+  margin-left: 1px;
+}
+
+.two-fraction__toolbar {
+  display: flex;
+  gap: 8px;
+  background: var(--tool-bg);
+  border-radius: 12px;
+  padding: 6px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.two-fraction__mushroom-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: clamp(44px, 5vmin, 56px);
+  min-height: clamp(44px, 5vmin, 56px);
+  padding: 4px 6px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--tool-fg);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.two-fraction__mushroom-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.two-fraction__mushroom-btn:active {
+  transform: scale(0.96);
+}
+
+.two-fraction__mushroom-label {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.two-fraction__simplest-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-weight: 800;
+  color: #1a1a1a;
+  background: var(--tool-active);
+  border-radius: 999px;
+}
+
+.two-fraction__operator {
+  font-size: clamp(36px, 7vmin, 64px);
+  font-weight: 800;
+  color: #fff;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: color 200ms ease, text-shadow 200ms ease;
+}
+
+/* D13 — pulse the operator yellow on matched bases. */
+@keyframes two-fraction-operator-pulse {
+  0%, 100% { color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); }
+  50% { color: var(--tool-active); text-shadow: 0 0 18px var(--tool-active); }
+}
+
+.two-fraction__operator--pulse {
+  animation: two-fraction-operator-pulse 1.5s ease-in-out infinite;
+}
+
+/* D13 — right fraction lifts with a 2px yellow glow + 4px lift shadow. */
+.two-fraction__side--draggable .two-fraction__fraction {
+  transform: translateY(-4px);
+  outline-color: var(--tool-active);
+  box-shadow: 0 4px 12px rgba(255, 210, 74, 0.35);
+  cursor: grab;
+}
+
+.two-fraction__side--dragging .two-fraction__fraction {
+  cursor: grabbing;
+  z-index: 5;
+}
+
+/* D17 — snap-back animation to (0,0) over 200ms ease-out. */
+.two-fraction__side--snapback .two-fraction__fraction {
+  transition: transform 200ms ease-out;
+  transform: translateY(-4px);
+}
+
+/* D13 — drop zone reveal on the left fraction during drag. Dashed yellow. */
+.two-fraction__drop-zone {
+  outline-style: dashed;
+  outline-width: 2px;
+  outline-color: transparent;
+  outline-offset: 6px;
+  border-radius: 8px;
+  transition: outline-color 150ms ease, background 150ms ease;
+}
+
+.two-fraction__drop-zone--active {
+  outline-color: var(--tool-active);
+  background: rgba(255, 210, 74, 0.08);
+}
+
+/* Below 768px — stack vertically; rotate the operator 90°. */
+@media (max-width: 768px) {
+  .two-fraction {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .two-fraction__operator {
+    transform: rotate(90deg);
+  }
+}
+
+/* prefers-reduced-motion: drop the pulse, the lift transition, the
+   snap-back transition. Match state stays informative; the animation
+   doesn't. */
+@media (prefers-reduced-motion: reduce) {
+  .two-fraction__operator--pulse {
+    animation: none;
+    color: var(--tool-active);
+    text-shadow: 0 0 12px var(--tool-active);
+  }
+  .two-fraction__fraction,
+  .two-fraction__side--draggable .two-fraction__fraction,
+  .two-fraction__side--snapback .two-fraction__fraction,
+  .two-fraction__drop-zone {
+    transition: none;
+  }
+}
+
+.two-fraction__result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* ----- Phase indicator (T24) ----- */
+
+.phase-indicator {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.phase-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--tool-bg);
+  color: var(--tool-fg);
+  font-weight: 700;
+  font-size: 13px;
+  min-height: 32px;
+  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.phase-chip__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.phase-chip--active {
+  background: var(--tool-active);
+  color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(255, 210, 74, 0.45);
+}
+
+.phase-chip--active .phase-chip__num {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phase-chip {
+    transition: none;
+  }
+}
+
+/* ----- Capstone end card (T21) ----- */
+
+.capstone-end-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: min(100%, 480px);
+  margin: 0 auto;
+  padding: 32px 28px;
+  background: var(--bg-canvas);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.capstone-end-card__score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text);
+}
+
+.capstone-end-card__score-num {
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--tool-active);
+}
+
+.capstone-end-card__score-sep {
+  font-size: 40px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.capstone-end-card__score-den {
+  font-size: 40px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.capstone-end-card__caption {
+  margin: 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.capstone-end-card__proof {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 12px 0 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.capstone-end-card__proof-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.capstone-end-card__plus,
+.capstone-end-card__eq {
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.capstone-fraction {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 700;
+  line-height: 1;
+  font-size: 18px;
+}
+
+.capstone-fraction__bar {
+  display: block;
+  width: 100%;
+  min-width: 18px;
+  height: 2px;
+  background: currentColor;
+  margin: 2px 0;
+}
+
+.capstone-end-card__cta {
+  margin-top: 6px;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: 800;
+  background: var(--tool-active);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 44px;
+  transition: filter 120ms ease, transform 120ms ease;
+}
+
+.capstone-end-card__cta:hover {
+  filter: brightness(1.05);
+}
+
+.capstone-end-card__cta:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capstone-end-card__cta {
+    transition: none;
+  }
+}
+
+/* === END Lane A === */
