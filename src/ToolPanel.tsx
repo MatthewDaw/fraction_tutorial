@@ -33,6 +33,40 @@ const HammerIcon = ({ n, size }: { n: number; size: number }) => {
   );
 };
 
+// Hand-drawn glue pot — matches the mushroom illustration style:
+// rounded body, simple white highlights, no fine detail. (T25)
+const GlueIcon = () => (
+  <svg width={26} height={26} viewBox="0 0 32 32" aria-hidden>
+    {/* Lid */}
+    <rect x="11" y="3" width="10" height="4" rx="1.5" fill="#3a3a3a" />
+    {/* Neck */}
+    <rect x="12.5" y="6" width="7" height="3" fill="#5a5a5a" />
+    {/* Bottle body */}
+    <path
+      d="M9 11 Q9 9 12 9 H20 Q23 9 23 11 V25 Q23 28 20 28 H12 Q9 28 9 25 Z"
+      fill="#e8b86a"
+      stroke="#7a4f1a"
+      strokeWidth="1.2"
+    />
+    {/* Label band */}
+    <rect x="11" y="15" width="10" height="6" fill="#fff4d6" />
+    {/* Highlight */}
+    <path
+      d="M11 12 Q10.5 14 11 22"
+      stroke="#fff"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      fill="none"
+      opacity="0.55"
+    />
+    {/* Drip */}
+    <path
+      d="M16 7 Q16 8 16.5 9 Q16 8.2 15.5 9 Q16 8 16 7"
+      fill="#fff4d6"
+    />
+  </svg>
+);
+
 const ToolPanel = ({ activeTool, allowedOps, lockedOps, onSelect }: Props) => {
   const isActive = (tool: NonNullable<Tool>) => {
     if (!activeTool) return false;
@@ -94,7 +128,9 @@ const ToolPanel = ({ activeTool, allowedOps, lockedOps, onSelect }: Props) => {
             onClick={() => onSelect(isActive({ kind: 'glue' }) ? null : { kind: 'glue' })}
             aria-label="Glue: merge pieces"
           >
-            <span className="tool-btn__icon" aria-hidden>🧴</span>
+            <span className="tool-btn__icon" aria-hidden>
+              <GlueIcon />
+            </span>
             <span className="tool-btn__label">Glue</span>
           </button>
         </div>

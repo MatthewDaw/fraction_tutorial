@@ -100,7 +100,16 @@ export type V2StepCompletion =
   | 'array-fitted'
   | 'common-moved'
   | 'venn-placed'
-  | 'worksheet-passed';
+  | 'worksheet-passed'
+  // Two-fraction board: both sides display the same denominator (denom ×
+  // multiplierFactor). Fires the rising-edge transition for phase advance.
+  | 'both-sides-same-denom'
+  // Two-fraction board: student dragged right onto left after match; the
+  // canvas collapsed to a single fraction.
+  | 'combined'
+  // Single fraction is in simplest form (gcf(num, denom) === 1). Used by
+  // the capstone's third phase.
+  | 'simplest-form';
 
 // Canvas payload for a step. Each kind carries everything its renderer
 // needs. Omitting `canvas` on a step falls back to the fraction-box board;
@@ -150,6 +159,14 @@ export type V2StepCanvas =
       // digit full-brightness — the 3 rule uses the digit sum, so the whole
       // number matters.
       emphasis?: 'last-digit' | 'all-digits';
+    }
+  // Side-by-side two-fraction board (Module 3 + capstone). Each side has its
+  // own scale state; the renderer signals matched bases and offers drag-to-
+  // combine. See `TwoFractionsCanvas.tsx`.
+  | {
+      kind: 'twoFractions';
+      left: { num: number; denom: number };
+      right: { num: number; denom: number };
     };
 
 export type V2LessonStep = {
@@ -712,14 +729,19 @@ export const V2_LESSON_TABS: Record<V2ConceptId, V2Tab[]> = {
 // Per-lesson test configuration. Lessons without an entry render the
 // "Test coming soon." placeholder.
 //
-// Quiz mode (when `pool` is set): each round picks a denominator from the
-// pool, asks the student which hammer makes 1/N, then asks them to surface
-// that fraction. The first round uses pool[0]; subsequent rounds pick at
-// random (avoiding immediate repeats).
+// Single-step (default kind) — Quiz mode (when `pool` is set): each round
+// picks a denominator from the pool, asks the student which hammer makes
+// 1/N, then asks them to surface that fraction. Free-play mode (when only
+// `prompt` and `allowedOps` are set): just shows the prompt next to the
+// toolbar.
 //
-// Free-play mode (when only `prompt` and `allowedOps` are set): just shows
-// the prompt next to the toolbar.
-export type V2LessonTest = {
+// Multi-phase (kind: 'multiPhase') — Capstone format. A generator produces a
+// pair of fractions; the student walks through `phases` in order (equate →
+// combine → simplify). The harness in App.tsx advances phase index as each
+// `completeOn` check fires. After all phases pass, the next problem is
+// generated and phase resets to 0.
+export type V2LessonSingleStepTest = {
+  kind?: 'singleStep';
   allowedOps: AllowedOp[];
   pool?: number[];
   prompt?: string;
@@ -729,6 +751,36 @@ export type V2LessonTest = {
   // Per-test cap on the number of rounds. Defaults to MAX_TEST_QUESTIONS.
   maxQuestions?: number;
 };
+
+export type V2CapstoneProblem = {
+  left: { num: number; denom: number };
+  right: { num: number; denom: number };
+};
+
+export type V2MultiPhaseStep = {
+  // The canvas kind this phase renders. `'twoFractions'` for equate/combine,
+  // undefined (i.e. default fraction-box) for simplify.
+  canvasKind: 'twoFractions' | undefined;
+  completeOn: V2StepCompletion;
+};
+
+export type V2LessonMultiPhaseTest = {
+  kind: 'multiPhase';
+  // Total problems the student must solve to "pass" the capstone.
+  totalProblems: number;
+  // Minimum problems correct to pass the run.
+  passThreshold: number;
+  generator: () => V2CapstoneProblem;
+  phases: V2MultiPhaseStep[];
+};
+
+export type V2LessonTest = V2LessonSingleStepTest | V2LessonMultiPhaseTest;
+
+// Narrowing helpers — the single-step shape is the default; presence of
+// `kind === 'multiPhase'` flips the variant.
+export const isMultiPhaseTest = (
+  t: V2LessonTest | undefined,
+): t is V2LessonMultiPhaseTest => t?.kind === 'multiPhase';
 
 // Quiz tests cap their length to this many questions. If the pool has fewer
 // entries, the test ends once the pool is exhausted. No denominator repeats
