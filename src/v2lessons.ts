@@ -18,7 +18,17 @@ export type V2ConceptId =
   | 'divisibility-11'
   | 'factors-of-one'
   | 'factor-pairs'
-  | 'gcf-venn';
+  | 'gcf-venn'
+  | 'equivalent-fractions'
+  | 'multiply-by-one'
+  | 'equate-two-bases'
+  | 'reduce-by-shared-factor'
+  | 'simplest-form'
+  | 'simplification-drill'
+  | 'add-same-base'
+  | 'add-different-bases'
+  | 'add-and-simplify'
+  | 'final-assessment';
 
 export const V2_CONCEPTS: V2ConceptId[] = [
   'divide-by-2',
@@ -32,6 +42,16 @@ export const V2_CONCEPTS: V2ConceptId[] = [
   'factors-of-one',
   'factor-pairs',
   'gcf-venn',
+  'equivalent-fractions',
+  'multiply-by-one',
+  'equate-two-bases',
+  'reduce-by-shared-factor',
+  'simplest-form',
+  'simplification-drill',
+  'add-same-base',
+  'add-different-bases',
+  'add-and-simplify',
+  'final-assessment',
 ];
 
 export const V2_CONCEPT_LABELS: Record<V2ConceptId, string> = {
@@ -46,15 +66,39 @@ export const V2_CONCEPT_LABELS: Record<V2ConceptId, string> = {
   'factors-of-one': '9 - Factors Of A Number',
   'factor-pairs': '10 - Factor Pairs',
   'gcf-venn': '11 - Greatest Common Factor',
+  'equivalent-fractions': '12 - Equivalent Fractions',
+  'multiply-by-one': '13 - Multiplying By One',
+  'equate-two-bases': '14 - Equating Two Bases',
+  'reduce-by-shared-factor': '15 - Reducing By A Shared Factor',
+  'simplest-form': '16 - Simplest Form',
+  'simplification-drill': '17 - Simplification Drill',
+  'add-same-base': '18 - Adding With The Same Base',
+  'add-different-bases': '19 - Adding With Different Bases',
+  'add-and-simplify': '20 - Add And Simplify',
+  'final-assessment': '21 - Final Assessment',
 };
 
-export type V2ModuleId = 'prime-dividing' | 'common-factors';
+export type V2ModuleId =
+  | 'prime-dividing'
+  | 'common-factors'
+  | 'base-equating'
+  | 'simplification'
+  | 'add-fractions';
 
-export const V2_MODULES: V2ModuleId[] = ['prime-dividing', 'common-factors'];
+export const V2_MODULES: V2ModuleId[] = [
+  'prime-dividing',
+  'common-factors',
+  'base-equating',
+  'simplification',
+  'add-fractions',
+];
 
 export const V2_MODULE_LABELS: Record<V2ModuleId, string> = {
   'prime-dividing': 'Prime Number Dividing',
   'common-factors': 'Common Factors',
+  'base-equating': 'Base Equating',
+  'simplification': 'Simplification',
+  'add-fractions': 'Adding Fractions',
 };
 
 export const V2_MODULE_CONCEPTS: Record<V2ModuleId, V2ConceptId[]> = {
@@ -69,6 +113,14 @@ export const V2_MODULE_CONCEPTS: Record<V2ModuleId, V2ConceptId[]> = {
     'divisibility-11',
   ],
   'common-factors': ['factors-of-one', 'factor-pairs', 'gcf-venn'],
+  'base-equating': ['equivalent-fractions', 'multiply-by-one', 'equate-two-bases'],
+  'simplification': ['reduce-by-shared-factor', 'simplest-form', 'simplification-drill'],
+  'add-fractions': [
+    'add-same-base',
+    'add-different-bases',
+    'add-and-simplify',
+    'final-assessment',
+  ],
 };
 
 export type V2Animation =
@@ -889,6 +941,676 @@ export const V2_LESSONS: Record<V2ConceptId, V2LessonStep[]> = {
     },
   ],
 
+  // ---- Module 3: base-equating ------------------------------------------------
+
+  'equivalent-fractions': [
+    {
+      prompt:
+        "Welcome to lesson 12!\n\nA fraction can wear lots of different outfits. 1/2 and 2/4 and 4/8 all name the same amount — they just slice the whole into more pieces.\n\nLet's watch one fraction try on a few different outfits.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Here's a whole block. Smash it once with the 2 hammer to make halves.\n\nThen smash one of the halves again to make 1/2 = 2/4.",
+      initialState: createRootPiece(),
+      allowedOps: ['split:2'],
+      completeOn: 'all-pieces-at-target',
+      targetDenominator: 4,
+    },
+    {
+      prompt:
+        "Same shaded region. The pieces got smaller, but you have twice as many of them.\n\n1/2 = 2/4. The bottom doubled, the top doubled too.",
+      initialState: splitAll(2, 2),
+      allowedOps: ['split:2'],
+      completeOn: 'next-button',
+      targetDenominator: 4,
+    },
+    {
+      prompt:
+        "Keep going. Smash each piece in half with the 2 hammer.\n\n2/4 becomes 4/8 — still the same shaded amount.",
+      initialState: splitAll(2, 2),
+      allowedOps: ['split:2'],
+      completeOn: 'all-pieces-at-target',
+      targetDenominator: 8,
+    },
+    {
+      prompt:
+        "One more time. Smash every 1/8 piece in half to reach 1/2 = 4/8 = 8/16.",
+      initialState: splitAll(2, 3),
+      allowedOps: ['split:2'],
+      completeOn: 'all-pieces-at-target',
+      targetDenominator: 16,
+    },
+    {
+      prompt:
+        "Look at the chain you just built:\n\n1/2 = 2/4 = 4/8 = 8/16.\n\nEvery time you split each piece into 2 more, the top AND the bottom both multiplied by 2. The amount didn't change — you just described it in smaller pieces.",
+      initialState: splitAll(2, 4),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Same trick works with 3s. Start from one whole block and use the 3 hammer twice to reach 1/3 = 3/9 = 9/27.\n\nFirst smash makes thirds; second smash splits each third into 3 more.",
+      initialState: createRootPiece(),
+      allowedOps: ['split:3'],
+      completeOn: 'all-pieces-at-target',
+      targetDenominator: 9,
+    },
+    {
+      prompt:
+        "Now one more smash to reach 27ths.",
+      initialState: splitAll(3, 2),
+      allowedOps: ['split:3'],
+      completeOn: 'all-pieces-at-target',
+      targetDenominator: 27,
+    },
+    {
+      prompt:
+        "Any fraction equals itself when you multiply BOTH the top and the bottom by the same number.\n\nThat's the rule we'll use next to make two different fractions match up.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  'multiply-by-one': [
+    {
+      prompt:
+        "Welcome to lesson 13!\n\nHere's WHY that trick works. Watch this: 8 divided by 8 is 1. So is 3 divided by 3. So is 247 divided by 247.\n\nAny number over itself equals 1.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "And multiplying by 1 changes nothing.\n\n1/3 × 1 = 1/3. Obvious.\n\nBut here's the twist: 1 can wear different outfits too. 1 = 8/8. So 1/3 × 8/8 also equals 1/3 — same value, different form.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Let's see it on the board.\n\nHere's 1/3. To multiply it by 8/8, we'll use the mushrooms below — and per our prime trick, multiplying by 8 means three ×2 mushroom clicks (×2, ×2, ×2).\n\nClick the ×2 mushroom under the LEFT fraction three times. Watch 1/3 become 2/6, then 4/12, then 8/24.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 1, denom: 3 },
+        right: { num: 1, denom: 3 },
+      },
+    },
+    {
+      prompt:
+        "Each old piece became 8 new pieces — but the shaded chunk is exactly the same.\n\n1/3 = 8/24. Same fraction, new outfit.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Your turn. Here's 1/8. Multiply it by 3 using the ×3 mushroom on the LEFT side.\n\nOne click takes 1/8 → 3/24.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 1, denom: 8 },
+        right: { num: 1, denom: 8 },
+      },
+    },
+    {
+      prompt:
+        "Both 1/3 and 1/8 can be re-dressed to share the same bottom number: 24.\n\nThat's no accident — we picked the multipliers on purpose. Next lesson puts the two together.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  'equate-two-bases': [
+    {
+      prompt:
+        "Welcome to lesson 14!\n\nTime to put it together. Given 1/3 and 1/8, how do we make their bottoms match?",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Here's the recipe:\n\n• Take the LEFT fraction and multiply by the RIGHT's denominator.\n• Take the RIGHT fraction and multiply by the LEFT's denominator.\n\nBoth bottoms end at 3 × 8 = 24.\n\nOn the board: click ×2 three times on the LEFT (that's ×8), and click ×3 once on the RIGHT.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 1, denom: 3 },
+        right: { num: 1, denom: 8 },
+      },
+    },
+    {
+      prompt:
+        "Both fractions now share /24. ✓\n\nWhy did multiplying by the OPPOSITE denominator work? Because each side picked up the missing factor from the other side's bottom — guaranteeing both bottoms end the same.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Try another pair: 1/2 and 1/5.\n\nLEFT × 5 (one ×5 mushroom click) and RIGHT × 2 (one ×2 mushroom click). Both reach /10.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 1, denom: 2 },
+        right: { num: 1, denom: 5 },
+      },
+    },
+    {
+      prompt:
+        "One more, with non-unit tops: 2/3 and 1/4.\n\nLEFT × 4 (two ×2 clicks) takes 2/3 → 8/12. RIGHT × 3 takes 1/4 → 3/12.\n\nThe top of each fraction scales by the same multiplier as the bottom — that's why the trick keeps the value the same.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 2, denom: 3 },
+        right: { num: 1, denom: 4 },
+      },
+    },
+    {
+      prompt:
+        "Last one for practice: 3/4 and 2/5.\n\nLEFT × 5 → 15/20. RIGHT × 2 × 2 → 8/20.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 3, denom: 4 },
+        right: { num: 2, denom: 5 },
+      },
+    },
+    {
+      prompt:
+        "Two fractions, two scale moves, one shared base.\n\nNext up: now that they share a base, how do you actually combine them?",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  // ---- Module 4: simplification ---------------------------------------------
+
+  'reduce-by-shared-factor': [
+    {
+      prompt:
+        "Welcome to lesson 15!\n\nLast module taught you how to make pieces SMALLER while keeping the same amount. Now we go the other way: make pieces BIGGER while keeping the same amount.\n\nThis is called simplifying.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Here are 8 dots — think of them as the 8 in 4/8. Pull them into pairs.\n\nEach pair of small pieces is the same as one bigger piece. After pairing, the 8 turn into 4 groups — that's the /4 in 2/4.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-grouped',
+      canvas: { kind: 'dots', count: 8, groupSize: 2 },
+    },
+    {
+      prompt:
+        "Look what happened: 8 little pieces collapsed into 4 bigger pieces.\n\n4/8 became 2/4 — same shaded amount, fewer, bigger pieces.\n\nThis works because BOTH the top (4) and the bottom (8) were divisible by 2. So we divided BOTH by 2.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Can we keep going? In 2/4, the top (2) and bottom (4) still share a factor of 2.\n\nPair up these 4 dots one more time.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-grouped',
+      canvas: { kind: 'dots', count: 4, groupSize: 2 },
+    },
+    {
+      prompt:
+        "Two more pieces collapsed into one. 2/4 → 1/2 — the simplest version.\n\nThe rule: whenever the top and bottom share a factor K, you can divide BOTH by K. The fraction looks simpler, but its value doesn't change.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Try it with 6/9. The top is 6, the bottom is 9 — they share a factor of 3.\n\nPair these 9 dots into groups of 3.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'dots-grouped',
+      canvas: { kind: 'dots', count: 9, groupSize: 3 },
+    },
+    {
+      prompt:
+        "9 dots became 3 groups of 3. So 9 ÷ 3 = 3.\n\nDo the same to the top: 6 ÷ 3 = 2.\n\n6/9 = 2/3. ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Whenever the top and bottom share a factor, you can divide both by it.\n\nThe fraction looks simpler. The value doesn't change.\n\nNext lesson: how do you know when to stop?",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  'simplest-form': [
+    {
+      prompt:
+        "Welcome to lesson 16!\n\nWhen can you stop simplifying?\n\nWhen the top and bottom share no factors except 1. That's called SIMPLEST FORM.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Look at 8/12. Is it in simplest form?\n\nDo 8 and 12 share any factors bigger than 1?",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      guessAnswer: 'no',
+      guessExplanation:
+        "8 and 12 share 2 and 4 as factors — so 8/12 is NOT in simplest form. We can simplify it.",
+    },
+    {
+      prompt:
+        "Let's find the BIGGEST factor 8 and 12 share — their GCF.\n\nDrag each factor tile into the right region. Anything in the overlap is shared.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'venn-placed',
+      canvas: { kind: 'venn', a: 8, b: 12 },
+    },
+    {
+      prompt:
+        "GCF(8, 12) = 4.\n\nDivide both top and bottom by 4:\n• 8 ÷ 4 = 2\n• 12 ÷ 4 = 3\n\nResult: 8/12 = 2/3 in one move.\n\nAnd 2 and 3 share no factors except 1 — so 2/3 IS in simplest form. Done.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: { kind: 'venn', a: 8, b: 12, resultView: true },
+    },
+    {
+      prompt:
+        "Now try 5/9. Is it in simplest form?\n\nThink about what 5 and 9 share.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      guessAnswer: 'yes',
+      guessExplanation:
+        "5 and 9 share no factors except 1 — so 5/9 is already in simplest form. It can't be simplified.",
+    },
+    {
+      prompt:
+        "One trickier one: 9/24.\n\nFind the GCF first — drag the factors into the Venn diagram.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'venn-placed',
+      canvas: { kind: 'venn', a: 9, b: 24 },
+    },
+    {
+      prompt:
+        "GCF(9, 24) = 3.\n\nDivide both by 3:\n• 9 ÷ 3 = 3\n• 24 ÷ 3 = 8\n\nResult: 9/24 = 3/8. ✓\n\nAnd 3 and 8 share no factors except 1 — simplest form.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: { kind: 'venn', a: 9, b: 24, resultView: true },
+    },
+    {
+      prompt:
+        "Simplest form means GCF(top, bottom) = 1.\n\nTo get there fastest: find the GCF, then divide both by it once.\n\nNext up: drill it.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  'simplification-drill': [
+    {
+      prompt:
+        "Welcome to lesson 17!\n\nYour turn. Several fractions in a row — for each one, find the GCF of the top and bottom, then simplify.\n\nNo new tricks. Just reps.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Round 1: 4/10.\n\nWhat do 4 and 10 share?",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'venn-placed',
+      canvas: { kind: 'venn', a: 4, b: 10 },
+    },
+    {
+      prompt:
+        "GCF(4, 10) = 2.\n\n4 ÷ 2 = 2, 10 ÷ 2 = 5. So 4/10 = 2/5. ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: { kind: 'venn', a: 4, b: 10, resultView: true },
+    },
+    {
+      prompt:
+        "Round 2: 6/15. Find their GCF.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'venn-placed',
+      canvas: { kind: 'venn', a: 6, b: 15 },
+    },
+    {
+      prompt:
+        "GCF(6, 15) = 3.\n\n6 ÷ 3 = 2, 15 ÷ 3 = 5. So 6/15 = 2/5. ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: { kind: 'venn', a: 6, b: 15, resultView: true },
+    },
+    {
+      prompt:
+        "Round 3: 12/18.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'venn-placed',
+      canvas: { kind: 'venn', a: 12, b: 18 },
+    },
+    {
+      prompt:
+        "GCF(12, 18) = 6.\n\n12 ÷ 6 = 2, 18 ÷ 6 = 3. So 12/18 = 2/3. ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: { kind: 'venn', a: 12, b: 18, resultView: true },
+    },
+    {
+      prompt:
+        "Round 4: 10/25.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'venn-placed',
+      canvas: { kind: 'venn', a: 10, b: 25 },
+    },
+    {
+      prompt:
+        "GCF(10, 25) = 5.\n\n10 ÷ 5 = 2, 25 ÷ 5 = 5. So 10/25 = 2/5. ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: { kind: 'venn', a: 10, b: 25, resultView: true },
+    },
+    {
+      prompt:
+        "Round 5: 9/12.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'venn-placed',
+      canvas: { kind: 'venn', a: 9, b: 12 },
+    },
+    {
+      prompt:
+        "GCF(9, 12) = 3.\n\n9 ÷ 3 = 3, 12 ÷ 3 = 4. So 9/12 = 3/4. ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: { kind: 'venn', a: 9, b: 12, resultView: true },
+    },
+    {
+      prompt:
+        "You can take any fraction and find its simplest form.\n\nNext module: combine THIS with base-equating to add ANY two fractions together.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  // ---- Module 5: add-fractions ----------------------------------------------
+
+  'add-same-base': [
+    {
+      prompt:
+        "Welcome to lesson 18!\n\nFinal stretch. Let's actually ADD fractions.\n\nWe'll start with the easy case: same denominator.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Here's 2/8 + 3/8. Both fractions are eighths — same bottom.\n\nThe bases already match. Drag the RIGHT fraction onto the LEFT to combine them into a single fraction.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 2, denom: 8 },
+        right: { num: 3, denom: 8 },
+      },
+    },
+    {
+      prompt:
+        "You had 2 eighths plus 3 more eighths. That's 5 eighths total.\n\n2/8 + 3/8 = 5/8.\n\nThe pieces are the same size — you just have more of them now.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Try: 1/5 + 2/5.\n\nDrag the right onto the left.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 1, denom: 5 },
+        right: { num: 2, denom: 5 },
+      },
+    },
+    {
+      prompt:
+        "1/5 + 2/5 = 3/5. ✓\n\nOne more: 2/6 + 3/6. Drag to combine.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 2, denom: 6 },
+        right: { num: 3, denom: 6 },
+      },
+    },
+    {
+      prompt:
+        "2/6 + 3/6 = 5/6. ✓\n\n(You might be itching to simplify — resist! That's the next lesson's job.)\n\nThe rule for same-denominator addition: add the tops, keep the bottom. That's it.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  'add-different-bases': [
+    {
+      prompt:
+        "Welcome to lesson 19!\n\nWhat if the bottoms DON'T match?\n\nYou already know the answer: EQUATE first (Module 3), then ADD.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "1/3 + 1/8. Bottoms don't match.\n\nFirst, equate: LEFT × 8 (three ×2 clicks) → 8/24. RIGHT × 3 → 3/24.\n\nThen drag to combine.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 1, denom: 3 },
+        right: { num: 1, denom: 8 },
+      },
+    },
+    {
+      prompt:
+        "1/3 + 1/8 = 8/24 + 3/24 = 11/24. ✓\n\nEquate, then add. Two steps.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Try 1/2 + 1/4.\n\nHere only the LEFT needs scaling: ×2 once gives 2/4. The RIGHT is already at /4.\n\nThen drag to combine.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 1, denom: 2 },
+        right: { num: 1, denom: 4 },
+      },
+    },
+    {
+      prompt:
+        "1/2 + 1/4 = 2/4 + 1/4 = 3/4. ✓\n\nWhen one bottom already divides the other, only one side needs scaling. The recipe still works either way.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Non-unit tops this time: 2/3 + 1/4.\n\nLEFT × 4 (two ×2 clicks) → 8/12. RIGHT × 3 → 3/12. Then combine.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 2, denom: 3 },
+        right: { num: 1, denom: 4 },
+      },
+    },
+    {
+      prompt:
+        "2/3 + 1/4 = 8/12 + 3/12 = 11/12. ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Last one: 3/5 + 1/2.\n\nLEFT × 2 → 6/10. RIGHT × 5 → 5/10. Combine.\n\nThe answer is going to be MORE than 1 whole — that's fine. Just stay with the recipe.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 3, denom: 5 },
+        right: { num: 1, denom: 2 },
+      },
+    },
+    {
+      prompt:
+        "3/5 + 1/2 = 6/10 + 5/10 = 11/10.\n\n11/10 is more than one whole — and that's perfectly OK. We'll just leave it as 11/10 for now.\n\nThe recipe: equate the bases, add the tops, keep the shared bottom. Two moves, every time.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  'add-and-simplify': [
+    {
+      prompt:
+        "Welcome to lesson 20!\n\nOne last polish.\n\nAfter adding, the result is often NOT in simplest form. Always finish by simplifying.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "1/6 + 1/3.\n\nEquate: LEFT × 3 → 3/18. RIGHT × 2 × 3 → 6/18.\n\nThen drag the right onto the left to combine.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 1, denom: 6 },
+        right: { num: 1, denom: 3 },
+      },
+    },
+    {
+      prompt:
+        "1/6 + 1/3 = 3/18 + 6/18 = 9/18.\n\nNot simplest form! GCF(9, 18) = 9.\n\n9 ÷ 9 = 1, 18 ÷ 9 = 2.\n\nSo 1/6 + 1/3 = 1/2. ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Try 1/4 + 1/12.\n\nEquate: LEFT × 12 (two ×2 clicks plus one ×3 click — total 12) → 12/48. RIGHT × 4 (two ×2 clicks) → 4/48.\n\nCombine.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 1, denom: 4 },
+        right: { num: 1, denom: 12 },
+      },
+    },
+    {
+      prompt:
+        "1/4 + 1/12 = 12/48 + 4/48 = 16/48.\n\nGCF(16, 48) = 16. So divide both by 16:\n• 16 ÷ 16 = 1\n• 48 ÷ 16 = 3\n\nResult: 1/3. ✓",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "One that goes improper: 2/3 + 4/9.\n\nEquate: LEFT × 9 (one ×3 click then another ×3 — total 9) → 18/27. RIGHT × 3 → 12/27.\n\nCombine.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+      canvas: {
+        kind: 'twoFractions',
+        left: { num: 2, denom: 3 },
+        right: { num: 4, denom: 9 },
+      },
+    },
+    {
+      prompt:
+        "2/3 + 4/9 = 18/27 + 12/27 = 30/27.\n\nMore than one whole — and still simplifiable! GCF(30, 27) = 3.\n\n30 ÷ 3 = 10, 27 ÷ 3 = 9. Result: 10/9. ✓\n\nImproper fractions can still be simplified. We just leave them in n/d form.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "The full recipe — every fraction addition, every time:\n\n1. EQUATE — multiply each fraction by the opposite denominator over itself, so both share a base.\n2. ADD — add the numerators; keep the shared base.\n3. SIMPLIFY — divide top and bottom by their GCF.\n\nNext: the capstone. You'll do it all yourself.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
+  'final-assessment': [
+    {
+      prompt:
+        "Welcome to the final assessment!\n\nYou've learned everything you need. Time to put it together.\n\nThe test gives you 10 random pairs of fractions. For each one: equate, combine, simplify. Pass at 8 out of 10.\n\nClick over to the TEST tab when you're ready.",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+    {
+      prompt:
+        "Quick refresher:\n\n• EQUATE — multiply each side by the opposite denominator. Use the mushrooms on each side of the board.\n• ADD — once bottoms match, drag the right fraction onto the left to combine.\n• SIMPLIFY — divide top and bottom by their GCF until they share no factors except 1.\n\nGood luck!",
+      initialState: createRootPiece(),
+      allowedOps: [],
+      completeOn: 'next-button',
+    },
+  ],
+
 };
 
 export type V2Tab = 'lesson' | 'test';
@@ -908,6 +1630,16 @@ export const V2_LESSON_TABS: Record<V2ConceptId, V2Tab[]> = {
   'factors-of-one': ['lesson'],
   'factor-pairs': ['lesson'],
   'gcf-venn': ['lesson'],
+  'equivalent-fractions': ['lesson'],
+  'multiply-by-one': ['lesson'],
+  'equate-two-bases': ['lesson'],
+  'reduce-by-shared-factor': ['lesson'],
+  'simplest-form': ['lesson'],
+  'simplification-drill': ['lesson'],
+  'add-same-base': ['lesson'],
+  'add-different-bases': ['lesson'],
+  'add-and-simplify': ['lesson'],
+  'final-assessment': ['lesson', 'test'],
 };
 
 // Per-lesson test configuration. Lessons without an entry render the
@@ -971,6 +1703,70 @@ export const isMultiPhaseTest = (
 // within a single run-through.
 export const MAX_TEST_QUESTIONS = 10;
 
+// Capstone generator (T14). Per D5: denominators ∈ [2, 12] including 7 and 11
+// (D8), proper fractions only, denominators MUST differ, and operand pairs
+// don't repeat across the current run. Rejecting pairs whose product exceeds
+// MAX_CAPSTONE_PRODUCT keeps the equated denominator readable on tablet.
+const CAPSTONE_DENOMS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
+const MAX_CAPSTONE_PRODUCT = 100;
+const MAX_GENERATOR_ATTEMPTS = 200;
+
+type CapstonePair = {
+  leftNum: number;
+  leftDenom: number;
+  rightNum: number;
+  rightDenom: number;
+};
+
+// Memo of recently emitted pairs. Capped at MAX_TEST_QUESTIONS so a long-
+// running session can't starve the generator of legal pairs.
+const recentCapstonePairs: CapstonePair[] = [];
+
+// (a+b) and (b+a) are treated as the same problem.
+const samePair = (a: CapstonePair, b: CapstonePair): boolean =>
+  (a.leftNum === b.leftNum &&
+    a.leftDenom === b.leftDenom &&
+    a.rightNum === b.rightNum &&
+    a.rightDenom === b.rightDenom) ||
+  (a.leftNum === b.rightNum &&
+    a.leftDenom === b.rightDenom &&
+    a.rightNum === b.leftNum &&
+    a.rightDenom === b.leftDenom);
+
+const pickDenom = (): number =>
+  CAPSTONE_DENOMS[Math.floor(Math.random() * CAPSTONE_DENOMS.length)];
+
+const pickNumerator = (denom: number): number => 1 + Math.floor(Math.random() * (denom - 1));
+
+const toProblem = (p: CapstonePair): V2CapstoneProblem => ({
+  left: { num: p.leftNum, denom: p.leftDenom },
+  right: { num: p.rightNum, denom: p.rightDenom },
+});
+
+export const generateCapstoneProblem = (): V2CapstoneProblem => {
+  for (let attempt = 0; attempt < MAX_GENERATOR_ATTEMPTS; attempt++) {
+    const leftDenom = pickDenom();
+    const rightDenom = pickDenom();
+    if (leftDenom === rightDenom) continue;
+    if (leftDenom * rightDenom > MAX_CAPSTONE_PRODUCT) continue;
+    const pair: CapstonePair = {
+      leftNum: pickNumerator(leftDenom),
+      leftDenom,
+      rightNum: pickNumerator(rightDenom),
+      rightDenom,
+    };
+    if (recentCapstonePairs.some((p) => samePair(p, pair))) continue;
+    recentCapstonePairs.push(pair);
+    if (recentCapstonePairs.length > MAX_TEST_QUESTIONS) recentCapstonePairs.shift();
+    return toProblem(pair);
+  }
+  // Practically unreachable: relax dedup so the test stays playable instead
+  // of throwing if the (already dense) legal-pair space somehow exhausts.
+  // The fallback must still satisfy denom!==denom and product<=MAX, so we
+  // hard-code a known-good pair instead of re-rolling.
+  return toProblem({ leftNum: 1, leftDenom: 2, rightNum: 1, rightDenom: 3 });
+};
+
 // Each test cumulates the hammers from the current lesson and all previous
 // ones, so the student can practice everything they've seen so far.
 export const V2_LESSON_TESTS: Partial<Record<V2ConceptId, V2LessonTest>> = {
@@ -979,6 +1775,20 @@ export const V2_LESSON_TESTS: Partial<Record<V2ConceptId, V2LessonTest>> = {
     // Start with 1/2 (the warm-up the lesson built toward), then random
     // through everything covered in lessons 1 and 2.
     pool: [2, 4, 8, 16, 32, 3, 9, 27],
+  },
+  'final-assessment': {
+    kind: 'multiPhase',
+    totalProblems: 10,
+    passThreshold: 8,
+    generator: generateCapstoneProblem,
+    phases: [
+      // Phase 0: equate. Student scales each side until displayed denominators match.
+      { canvasKind: 'twoFractions', completeOn: 'both-sides-same-denom' },
+      // Phase 1: combine. Student drags right onto left.
+      { canvasKind: 'twoFractions', completeOn: 'combined' },
+      // Phase 2: simplify. Single-fraction board; student divides by GCF.
+      { canvasKind: undefined, completeOn: 'simplest-form' },
+    ],
   },
 };
 
