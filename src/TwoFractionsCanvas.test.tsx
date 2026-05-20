@@ -60,6 +60,11 @@ const stubRect = (el: HTMLElement, rect: Partial<DOMRect>) => {
   el.getBoundingClientRect = () => r;
 };
 
+const textsOf = (selector: string): (string | null)[] =>
+  Array.from(document.querySelectorAll(selector)).map((e) => e.textContent);
+const denoms = () => textsOf('.two-fraction__den');
+const nums = () => textsOf('.two-fraction__num');
+
 describe('multiplierFactor', () => {
   it('returns 1 when no primes are active', () => {
     expect(multiplierFactor({})).toBe(1);
@@ -100,10 +105,8 @@ describe('<TwoFractionsCanvas />', () => {
     const leftToolbar = screen.getByRole('toolbar', { name: /left mushrooms/i });
     await user.click(leftToolbar.querySelector('button[aria-label="Multiply by 2"]')!);
     // Left now shows 2/4; right still 1/3.
-    const dens = Array.from(document.querySelectorAll('.two-fraction__den')).map((e) => e.textContent);
-    expect(dens).toEqual(['4', '3']);
-    const nums = Array.from(document.querySelectorAll('.two-fraction__num')).map((e) => e.textContent);
-    expect(nums).toEqual(['2', '1']);
+    expect(denoms()).toEqual(['4', '3']);
+    expect(nums()).toEqual(['2', '1']);
   });
 
   it('fires onMatchedBases on the rising edge when displayed denominators match', async () => {
@@ -195,13 +198,10 @@ describe('<TwoFractionsCanvas />', () => {
     await user.click(leftToolbar.querySelector('button[aria-label="Multiply by 2"]')!);
     await user.click(leftToolbar.querySelector('button[aria-label="Multiply by 2"]')!);
     // Left displayed = 1/2 × 2^2 = 4/8.
-    let dens = Array.from(document.querySelectorAll('.two-fraction__den')).map((e) => e.textContent);
-    expect(dens[0]).toBe('8');
+    expect(denoms()[0]).toBe('8');
     // The decrement chip for ×2 should now be present.
-    const dec = screen.getByRole('button', { name: /decrement multiplier by 2/i });
-    await user.click(dec);
-    dens = Array.from(document.querySelectorAll('.two-fraction__den')).map((e) => e.textContent);
-    expect(dens[0]).toBe('4'); // 1/2 × 2 = 2/4
+    await user.click(screen.getByRole('button', { name: /decrement multiplier by 2/i }));
+    expect(denoms()[0]).toBe('4'); // 1/2 × 2 = 2/4
   });
 
   it('snap-back timer cleanup runs on unmount without throwing', () => {
