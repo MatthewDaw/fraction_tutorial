@@ -29,23 +29,28 @@ const STORAGE_KEY = 'fractical:analytics:events';
 const MAX_EVENTS = 10_000;
 const CSV_FIELDS = ['ts', 'type', 'conceptId', 'score', 'attemptCount'] as const;
 
-function safeRead(): AnalyticsEvent[] {
+// Every storage touch is wrapped: localStorage can throw in Safari private
+// mode, on quota exceeded, or in non-DOM contexts. Analytics is fire-and-
+// forget, so swallow and fall back rather than escalate to the caller.
+function swallow<T>(fn: () => T, fallback: T): T {
   try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+}
+
+function safeRead(): AnalyticsEvent[] {
+  return swallow(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as AnalyticsEvent[]) : [];
-  } catch {
-    return [];
-  }
+  }, []);
 }
 
 function safeWrite(events: AnalyticsEvent[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-  } catch {
-    /* storage unavailable */
-  }
+  swallow(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(events)), undefined);
 }
 
 export function recordAnalyticsEvent(event: AnalyticsEvent): void {
@@ -62,11 +67,7 @@ export function getAllEvents(): AnalyticsEvent[] {
 }
 
 export function clearEvents(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* storage unavailable */
-  }
+  swallow(() => localStorage.removeItem(STORAGE_KEY), undefined);
 }
 
 // RFC-4180-ish: quote only when the value contains a comma, quote, CR, or LF;
@@ -86,7 +87,7 @@ export function exportEventsAsCSV(): string {
 }
 
 export function downloadCSV(filename = 'fractical-analytics.csv'): void {
-  try {
+  swallow(() => {
     const blob = new Blob([exportEventsAsCSV()], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -96,7 +97,5 @@ export function downloadCSV(filename = 'fractical-analytics.csv'): void {
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
-  } catch {
-    /* no DOM (SSR) or blocked download */
-  }
+  }, undefined);
 }
